@@ -1,0 +1,211 @@
+# duo-talk-simple システム設定
+# TDD方式で実装 | 作成日: 2026-01-14
+
+# ===== Ollama設定 =====
+ollama:
+  base_url: "http://localhost:11434/v1"
+  llm_model: "gemma3:12b"           # テキスト生成用
+  embed_model: "mxbai-embed-large"  # 埋め込み生成用
+  timeout: 30.0                      # タイムアウト（秒）
+  max_retries: 3                     # 最大リトライ回数
+
+# ===== RAG設定 =====
+rag:
+  # ChromaDB設定
+  chroma_db_path: "./data/chroma_db"
+  collection_name: "duo_knowledge"
+  
+  # 検索設定
+  top_k: 3                    # 検索結果の最大件数
+  similarity_threshold: 0.5   # 類似度の最低閾値
+  
+  # テキスト分割設定
+  chunk_size: 1000           # チャンクの最大文字数
+  chunk_overlap: 100         # チャンク間のオーバーラップ
+  
+  # Query Rewrite設定
+  enable_query_rewrite: false  # クエリ書き換え機能（Phase 5で有効化）
+  rewrite_temperature: 0.1     # 書き換え時の温度（安定性重視）
+
+# ===== 知識ベース設定 =====
+knowledge:
+  source_dir: "./knowledge"
+  
+  # 知識ソースファイル
+  sources:
+    - file: "jetracer_tech.txt"
+      metadata:
+        domain: "technical"        # ドメイン分類
+        character: "both"          # 両方のキャラクターが参照可能
+        priority: "high"           # 優先度
+    
+    - file: "sisters_shared.txt"
+      metadata:
+        domain: "character"
+        character: "both"
+        priority: "medium"
+  
+  # 初期化設定
+  auto_initialize: true      # 起動時に自動で知識投入
+  force_reload: false        # 既存データを削除して再投入
+
+# ===== キャラクター設定 =====
+characters:
+  yana:
+    enabled: true
+    config: "./personas/yana.yaml"
+    
+    # 応答生成設定（ペルソナYAMLの値を上書き可能）
+    generation:
+      temperature: 0.8
+      max_tokens: 2000
+      top_p: 0.9
+      frequency_penalty: 0.3
+    
+    # 会話履歴設定
+    max_history: 10           # 最大保持ターン数（10ターン = 20メッセージ）
+    
+    # RAG設定
+    use_rag_by_default: true  # デフォルトでRAG使用
+  
+  ayu:
+    enabled: true
+    config: "./personas/ayu.yaml"
+    
+    generation:
+      temperature: 0.7
+      max_tokens: 2000
+      top_p: 0.85
+      frequency_penalty: 0.2
+    
+    max_history: 10
+    use_rag_by_default: true
+
+# ===== ロギング設定 =====
+logging:
+  level: "INFO"              # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  
+  # ファイル出力
+  file:
+    enabled: true
+    path: "./logs/duo-talk.log"
+    max_bytes: 10485760      # 10MB
+    backup_count: 5
+  
+  # コンソール出力
+  console:
+    enabled: true
+    level: "INFO"
+
+# ===== パフォーマンス設定 =====
+performance:
+  # VRAM管理
+  max_vram_usage_gb: 12      # VRAM使用量の上限
+  
+  # キャッシュ設定
+  enable_response_cache: false  # 応答キャッシュ（将来の拡張）
+  cache_size: 100
+  
+  # バッチ処理
+  batch_size: 10             # 知識投入時のバッチサイズ
+
+# ===== UI設定 =====
+ui:
+  # プロンプト表示
+  show_character_name: true
+  show_timestamp: false
+  
+  # カラー設定（将来の拡張）
+  enable_colors: false
+  
+  # 起動メッセージ
+  welcome_message: |
+    === duo-talk-simple ===
+    やなとあゆがJetRacerについてお話しします
+    
+    コマンド:
+      /switch  - キャラクター切り替え
+      /clear   - 会話履歴クリア
+      /exit    - 終了
+
+# ===== 開発・デバッグ設定 =====
+development:
+  debug_mode: false
+  
+  # テスト用設定
+  test_mode: false
+  test_db_path: "./data/test_db"
+  
+  # プロンプト表示（デバッグ用）
+  show_prompts: false
+  show_rag_results: false
+
+# ===== システム情報 =====
+system:
+  version: "0.1.0"
+  project: "duo-talk-simple"
+  description: "TDD方式で実装する基本会話システム"
+  
+  # Phase情報
+  current_phase: "Phase 0"  # 実装が進むにつれて更新
+  
+  # 将来の拡張予定
+  planned_features:
+    - "JetRacer実機統合（Phase 5以降）"
+    - "VLM統合（Phase 5以降）"
+    - "Dual Judge System（Phase 5以降）"
+    - "姉妹視点メモリ（Phase 5以降）"
+
+# ===== 環境依存設定 =====
+environment:
+  # 開発環境
+  development:
+    ollama:
+      base_url: "http://localhost:11434/v1"
+    logging:
+      level: "DEBUG"
+  
+  # 本番環境（将来の拡張）
+  production:
+    ollama:
+      base_url: "http://localhost:11434/v1"
+    logging:
+      level: "INFO"
+
+---
+# 設定ファイルの使い方
+
+## 設定の優先順位
+1. 環境変数（DUO_TALK_*）
+2. このファイル（config.yaml）
+3. ペルソナYAML（personas/*.yaml）
+4. デフォルト値（コード内）
+
+## カスタマイズ方法
+
+### 例1: モデルを変更
+```yaml
+ollama:
+  llm_model: "llama3.1:8b"  # 別のモデルに変更
+```
+
+### 例2: RAG検索件数を増やす
+```yaml
+rag:
+  top_k: 5  # デフォルト3 → 5に変更
+```
+
+### 例3: デバッグモードを有効化
+```yaml
+development:
+  debug_mode: true
+  show_prompts: true
+  show_rag_results: true
+```
+
+## 注意事項
+- YAMLのインデントは必ずスペース2個
+- 文字列にコロン(:)が含まれる場合は引用符で囲む
+- パスはプロジェクトルートからの相対パス
+- 変更後はアプリケーションを再起動
