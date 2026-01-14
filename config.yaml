@@ -132,14 +132,14 @@ ui:
 # ===== 開発・デバッグ設定 =====
 development:
   debug_mode: false
-  
+
   # テスト用設定
   test_mode: false
   test_db_path: "./data/test_db"
-  
+
   # プロンプト表示（デバッグ用）
   show_prompts: false
-  show_rag_results: false
+  show_rag_results: true  # RAGチャンク表示
 
 # ===== システム情報 =====
 system:
@@ -173,39 +173,20 @@ environment:
     logging:
       level: "INFO"
 
----
+# ---
 # 設定ファイルの使い方
-
-## 設定の優先順位
-1. 環境変数（DUO_TALK_*）
-2. このファイル（config.yaml）
-3. ペルソナYAML（personas/*.yaml）
-4. デフォルト値（コード内）
-
-## カスタマイズ方法
-
-### 例1: モデルを変更
-```yaml
-ollama:
-  llm_model: "llama3.1:8b"  # 別のモデルに変更
-```
-
-### 例2: RAG検索件数を増やす
-```yaml
-rag:
-  top_k: 5  # デフォルト3 → 5に変更
-```
-
-### 例3: デバッグモードを有効化
-```yaml
-development:
-  debug_mode: true
-  show_prompts: true
-  show_rag_results: true
-```
-
-## 注意事項
-- YAMLのインデントは必ずスペース2個
-- 文字列にコロン(:)が含まれる場合は引用符で囲む
-- パスはプロジェクトルートからの相対パス
-- 変更後はアプリケーションを再起動
+#
+# 設定の優先順位:
+#   1. 環境変数（DUO_TALK_*）
+#   2. このファイル（config.yaml）
+#   3. ペルソナYAML（personas/*.yaml）
+#   4. デフォルト値（コード内）
+#
+# カスタマイズ例:
+#   - モデル変更: ollama.llm_model を変更
+#   - 検索件数: rag.top_k を変更
+#   - デバッグ: development.debug_mode を true に
+#
+# 注意:
+#   - YAMLインデントはスペース2個
+#   - パスはプロジェクトルートからの相対パス

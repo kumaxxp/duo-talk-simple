@@ -1,3 +1,5 @@
 .venv/
 core/__pycache__
 tests/__pycache__/
+data/chroma_db/
+logs/duo-talk.log
