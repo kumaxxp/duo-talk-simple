@@ -57,6 +57,11 @@ class Character:
         self.last_rag_results: List[Dict] = []
         self.current_state: Optional[str] = None
 
+        # テストで期待される config 属性を初期化
+        default_state = self.persona.required_states[0] if self.persona.required_states else "focused"
+        initial_prompt, _ = prompt_builder.build_system_prompt(self.persona, state=default_state)
+        self.config = {"system_prompt": initial_prompt}
+
         self.logger.info("キャラクター初期化: %s", self.name)
 
     def respond(
