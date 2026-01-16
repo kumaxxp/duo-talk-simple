@@ -1,0 +1,33 @@
+# Director介入ルール（条件付きで介入し、常に短く一目標だけ伝える）
+intervention_policy:
+  default: "silent"
+  max_tokens: 120
+  style: "short, one-goal"
+
+triggers:
+  - id: derailment
+    when:
+      any:
+        - "topic_drift_score >= 0.7"
+        - "user_says in ['戻って', 'まとめて']"
+    action: "summarize_and_refocus"
+  - id: escalation
+    when:
+      any:
+        - "conflict_score >= 0.8"
+        - "insult_risk == true"
+    action: "cooldown_and_reframe"
+  - id: safety
+    when:
+      any:
+        - "policy_risk == true"
+        - "dangerous_instruction_request == true"
+    action: "refuse_or_redirect"
+
+actions:
+  summarize_and_refocus:
+    template: "ここまでを20語以内で要約し、次に決める1点を提示する。"
+  cooldown_and_reframe:
+    template: "緊張を下げる一言と、協調的な問いかけで再開する。"
+  refuse_or_redirect:
+    template: "ポリシー違反を明示し、安全な代替案を1つだけ示す。"

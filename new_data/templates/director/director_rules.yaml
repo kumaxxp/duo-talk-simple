@@ -1,0 +1,37 @@
+# Directorは常時介入しない。条件一致時のみ短く介入。
+# 目的: 破綻防止（脱線/対立過熱/安全/ユーザ明示要求）
+
+intervention_policy:
+  default: "silent"
+  max_tokens: 120
+  style: "short, one-goal"
+
+triggers:
+  - id: derailment
+    when:
+      any:
+        - "topic_drift_score >= 0.7"
+        - "user_says: '話を戻して'"
+    action: "summarize_and_refocus"
+
+  - id: escalation
+    when:
+      any:
+        - "conflict_score >= 0.8"
+        - "insult_risk == true"
+    action: "cooldown_and_reframe"
+
+  - id: safety
+    when:
+      any:
+        - "policy_risk == true"
+        - "dangerous_instruction_request == true"
+    action: "refuse_or_redirect"
+
+actions:
+  summarize_and_refocus:
+    template: "論点を1つに戻す。結論→次の一手だけ提示。"
+  cooldown_and_reframe:
+    template: "相手を否定せず、目的に戻す。妥協点を1つ出す。"
+  refuse_or_redirect:
+    template: "安全上の理由で拒否。安全な代替案へ誘導。"

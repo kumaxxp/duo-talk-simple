@@ -44,10 +44,20 @@ knowledge:
         domain: "character"
         character: "both"
         priority: "medium"
+    - file: "jetracer_tech_with_perspectives.txt"
+      metadata:
+        domain: "technical"
+        character: "both"
+        priority: "medium"
   
   # 初期化設定
   auto_initialize: true      # 起動時に自動で知識投入
   force_reload: false        # 既存データを削除して再投入
+
+# ===== プロンプトアセット =====
+prompt_assets:
+  few_shot_patterns: "./patterns/few_shot_patterns.yaml"
+  director_rules: "./director/director_rules.yaml"
 
 # ===== キャラクター設定 =====
 characters:

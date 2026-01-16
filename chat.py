@@ -102,14 +102,20 @@ def initialize_system(config: dict) -> dict:
     # キャラクター初期化
     characters = {}
     char_configs = config["characters"]
+    prompt_assets = dict(config.get("prompt_assets", {}))
 
     for char_name, char_config in char_configs.items():
         if char_config.get("enabled", True):
+            char_assets = dict(prompt_assets)
+            char_assets.update(char_config.get("assets", {}))
             characters[char_name] = Character(
                 name=char_name,
                 config_path=char_config["config"],
                 ollama_client=client,
                 rag_engine=rag,
+                generation_defaults=char_config.get("generation", {}),
+                assets=char_assets,
+                max_history=char_config.get("max_history", 10),
             )
             logger.info(f"キャラクター「{char_name}」初期化完了")
 
