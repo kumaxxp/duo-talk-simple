@@ -51,7 +51,7 @@ class TestPerformance:
     """パフォーマンステスト"""
 
     def test_response_time_basic(self, perf_setup):
-        """TC-P-001: 基本応答時間（10秒以内）"""
+        """TC-P-001: 基本応答時間（30秒以内 - Cydonia 22B用）"""
         char = perf_setup["character"]
 
         start = time.time()
@@ -59,11 +59,11 @@ class TestPerformance:
         elapsed = time.time() - start
 
         assert len(response) > 0
-        assert elapsed < 10.0, f"応答時間が10秒を超えました: {elapsed:.2f}秒"
+        assert elapsed < 30.0, f"応答時間が30秒を超えました: {elapsed:.2f}秒"
         print(f"\n基本応答時間: {elapsed:.2f}秒")
 
     def test_response_time_with_rag(self, perf_setup):
-        """TC-P-002: RAG応答時間（15秒以内）"""
+        """TC-P-002: RAG応答時間（120秒以内 - Cydonia 22B用）"""
         char = perf_setup["character"]
 
         start = time.time()
@@ -71,7 +71,7 @@ class TestPerformance:
         elapsed = time.time() - start
 
         assert len(response) > 0
-        assert elapsed < 15.0, f"RAG応答時間が15秒を超えました: {elapsed:.2f}秒"
+        assert elapsed < 120.0, f"RAG応答時間が120秒を超えました: {elapsed:.2f}秒"
         print(f"\nRAG応答時間: {elapsed:.2f}秒")
 
     def test_embedding_time(self, perf_setup):

@@ -4,9 +4,9 @@
 # ===== Ollama設定 =====
 ollama:
   base_url: "http://localhost:11434/v1"
-  llm_model: "gemma3:12b"           # テキスト生成用
+  llm_model: "hello_user/cydonia:22b-v1.3-q4_K_M"  # Cydonia 22B（日本語キャラクター特化）
   embed_model: "mxbai-embed-large"  # 埋め込み生成用
-  timeout: 30.0                      # タイムアウト（秒）
+  timeout: 60.0                      # タイムアウト（秒）- 22Bモデル用に延長
   max_retries: 3                     # 最大リトライ回数
 
 # ===== RAG設定 =====
@@ -54,11 +54,12 @@ characters:
   yana:
     enabled: true
     config: "./personas/yana.yaml"
-    
+
     # 応答生成設定（ペルソナYAMLの値を上書き可能）
+    # Cydonia 22B TDD最適化済み: temp 0.55 (安定範囲: 0.3〜0.6)
     generation:
-      temperature: 0.8
-      max_tokens: 2000
+      temperature: 0.55
+      max_tokens: 500
       top_p: 0.9
       frequency_penalty: 0.3
     
@@ -71,10 +72,11 @@ characters:
   ayu:
     enabled: true
     config: "./personas/ayu.yaml"
-    
+
+    # Cydonia 22B TDD最適化済み: temp 0.50 (安定範囲: 0.3, 0.5〜0.6)
     generation:
-      temperature: 0.7
-      max_tokens: 2000
+      temperature: 0.50
+      max_tokens: 500
       top_p: 0.85
       frequency_penalty: 0.2
     
@@ -100,8 +102,8 @@ logging:
 
 # ===== パフォーマンス設定 =====
 performance:
-  # VRAM管理
-  max_vram_usage_gb: 12      # VRAM使用量の上限
+  # VRAM管理（Cydonia 22B: 約20.3GB使用）
+  max_vram_usage_gb: 21      # VRAM使用量の上限
   
   # キャッシュ設定
   enable_response_cache: false  # 応答キャッシュ（将来の拡張）
