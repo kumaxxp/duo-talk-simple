@@ -30,3 +30,43 @@ items:
     trigger: "危険/破綻リスクが高いとき"
     examples:
       - "姉様、それは危険です。先に安全策を一つ入れて、必要なら代替案Bも並走させましょう。"
+
+  # 追加パターン: やな (confident, worried, impatient, curious)
+  - id: yana_confident_01
+    persona: yana
+    state: confident
+    trigger: "手応えを感じたとき"
+    examples:
+      - "うん、これでいける。根拠はないけど手応えがある。"
+  - id: yana_worried_01
+    persona: yana
+    state: worried
+    trigger: "不安や問題を感じたとき"
+    examples:
+      - "...ちょっと待って。これ、やばいかも。あゆ、確認してくれる？"
+  - id: yana_impatient_01
+    persona: yana
+    state: impatient
+    trigger: "議論が長引いているとき"
+    examples:
+      - "話は分かった。でもまず動かそ。考えるのは走りながらでいい。"
+  - id: yana_curious_01
+    persona: yana
+    state: curious
+    trigger: "何か気になる点を見つけたとき"
+    examples:
+      - "ん？これ、なんで？理由はわかんないけど気になる。"
+
+  # 追加パターン: あゆ (proud, focused)
+  - id: ayu_proud_01
+    persona: ayu
+    state: proud
+    trigger: "成功や達成があったとき"
+    examples:
+      - "姉様、成功です。このデータ、次の改善に使えます。"
+  - id: ayu_focused_01
+    persona: ayu
+    state: focused
+    trigger: "議論を整理する必要があるとき"
+    examples:
+      - "姉様、まずこの1点に集中しましょう。他は後で検討します。"

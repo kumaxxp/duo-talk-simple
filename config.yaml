@@ -91,6 +91,16 @@ characters:
     max_history: 10
     use_rag_by_default: true
 
+# ===== AI姉妹対話モード設定 =====
+duo_dialogue:
+  # 対話制御
+  max_turns: 10              # 最大往復数
+  first_speaker: "yana"      # 最初に発言するキャラ
+
+  # 表示設定
+  show_turn_count: true      # ターン数を表示
+  typing_delay: 0.5          # 発言間の遅延（秒）
+
 # ===== ロギング設定 =====
 logging:
   level: "INFO"              # DEBUG, INFO, WARNING, ERROR, CRITICAL

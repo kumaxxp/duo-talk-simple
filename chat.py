@@ -11,6 +11,7 @@ from logging.handlers import RotatingFileHandler
 from core.ollama_client import OllamaClient
 from core.rag_engine import RAGEngine
 from core.character import Character
+from core.duo_dialogue import DuoDialogueManager, DialogueState
 
 
 def setup_logging(config: dict) -> logging.Logger:
@@ -133,6 +134,79 @@ def print_welcome(config: dict):
     print(message)
 
 
+def run_duo_dialogue(characters: dict, config: dict, topic: str):
+    """AI同士対話モードを実行"""
+    logger = logging.getLogger(__name__)
+
+    if "yana" not in characters or "ayu" not in characters:
+        print("エラー: やなとあゆ両方が必要です")
+        return
+
+    # DuoDialogueManager設定
+    duo_config = config.get("duo_dialogue", {})
+    manager = DuoDialogueManager(
+        yana=characters["yana"],
+        ayu=characters["ayu"],
+        config={
+            "max_turns": duo_config.get("max_turns", 10),
+            "first_speaker": duo_config.get("first_speaker", "yana"),
+        }
+    )
+
+    # 対話開始
+    print("\n" + "=" * 50)
+    print("=== AI姉妹対話モード ===")
+    print(f"お題: {topic}")
+    print("=" * 50)
+
+    manager.start_dialogue(topic)
+
+    # 対話ループ
+    typing_delay = duo_config.get("typing_delay", 0.5)
+    show_turn_count = duo_config.get("show_turn_count", True)
+
+    import time
+
+    while manager.should_continue():
+        try:
+            speaker, response = manager.next_turn()
+
+            # ターン表示
+            if show_turn_count:
+                print(f"\n[Turn {manager.turn_count}/{manager.max_turns}] {speaker}:")
+            else:
+                print(f"\n[{speaker}]:")
+
+            print(response)
+
+            # タイピング遅延
+            time.sleep(typing_delay)
+
+            # ユーザー介入チェック（Ctrl+C で中断可能）
+
+        except KeyboardInterrupt:
+            print("\n\n--- 対話を中断しました ---")
+            break
+        except Exception as e:
+            logger.error(f"対話中にエラー: {e}")
+            print(f"\nエラー: {e}")
+            break
+
+    # 対話終了
+    print("\n" + "=" * 50)
+    print("=== 対話終了 ===")
+    print("=" * 50)
+
+    # サマリー表示
+    if manager.dialogue_history:
+        print("\n【対話まとめ】")
+        print(manager.get_summary())
+
+    # 履歴をクリア（次の通常会話に影響しないように）
+    characters["yana"].clear_history()
+    characters["ayu"].clear_history()
+
+
 def main():
     """メインループ"""
     # 設定読み込み
@@ -206,8 +280,24 @@ def main():
                     print("  /switch - キャラクター切り替え")
                     print("  /clear  - 会話履歴クリア")
                     print("  /status - 状態表示")
+                    print("  /duo <お題> - AI姉妹対話モード")
                     print("  /debug  - RAGデバッグ表示切替")
                     print("  /exit   - 終了")
+                    continue
+
+                elif user_input.lower().startswith("/duo "):
+                    # AI姉妹対話モード
+                    topic = user_input[5:].strip()
+                    if not topic:
+                        print("使い方: /duo <お題>")
+                        print("例: /duo JetRacerのセンサー配置を改善したい")
+                        continue
+                    run_duo_dialogue(characters, config, topic)
+                    continue
+
+                elif command == "/duo":
+                    print("使い方: /duo <お題>")
+                    print("例: /duo JetRacerのセンサー配置を改善したい")
                     continue
 
                 elif command == "/debug":
