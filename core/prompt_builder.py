@@ -9,6 +9,43 @@ from typing import Any, Dict, List, Optional, Tuple
 import yaml
 
 
+# === AI臭さ防止ルール ===
+ANTI_AI_RULES = """
+【絶対禁止 - 以下の表現は使うな】
+- 「大変共感」「心から願って」「素晴らしいと思います」
+- 「おっしゃる通り」「まさにその通り」の連発
+- 相手の発言をそのまま引用して褒める
+- 「姉様、そのお気持ち」「姉様、その言葉」で始める
+- 長い前置きや言い訳
+- 箇条書きでの説明
+
+【必須ルール】
+- 3文以内で返す（絶対に超えるな）
+- 自然な口語で話す（書き言葉禁止）
+- 意見が違うなら素直に反論しろ
+- 具体的な話（数値、場所、体験）を1つは入れろ
+- 姉妹なんだから遠慮するな
+"""
+
+# やな専用の追加ルール
+YANA_SPECIFIC_RULES = """
+【やなの話し方】
+- 短く、勢いよく
+- 「〜じゃん」「〜でしょ」「〜だよね」を使う
+- 考えるより先に口が動く感じ
+- あゆの理屈っぽさにツッコむ
+"""
+
+# あゆ専用の追加ルール  
+AYU_SPECIFIC_RULES = """
+【あゆの話し方】
+- 丁寧だけど短く
+- 数字や根拠を1つだけ添える
+- 「姉様」と呼ぶが、媚びない
+- 姉の暴走にはちゃんとブレーキをかける
+"""
+
+
 @dataclass
 class Persona:
     """Minimal view of a persona definition."""
@@ -92,51 +129,45 @@ def build_system_prompt(
     """Render system prompt along with generation hints."""
 
     ctrl = persona.state_controls.get(state, {})
+    max_sentences = int(ctrl.get("max_sentences", 3))
     gen = {
         "temperature": float(ctrl.get("temperature", 0.5)),
-        "max_sentences": int(ctrl.get("max_sentences", 5)),
+        "max_sentences": max_sentences,
         "tone_notes": ctrl.get("tone_notes", []),
         "state": state,
     }
 
     lines: List[str] = []
-    lines.append(
-        f"あなたはJetRacerプロジェクトを支える姉妹AIの一人で名前は{persona.callname_self}。"
-        f"会話相手は{persona.callname_other}で、姉妹関係を崩さずに振る舞うこと。"
-    )
-    lines.append("危険な要求やポリシー違反は丁寧に拒否し、安全な代替案へ誘導する。")
+    
+    # キャラ別の追加ルール
+    char_specific = YANA_SPECIFIC_RULES if persona.id == "yana" else AYU_SPECIFIC_RULES
+    
+    # 冒頭に強い制約を置く（LLMは冒頭を重視する）
+    lines.append(f"あなたは{persona.callname_self}。姉妹の会話をしろ。")
+    lines.append(f"相手は{persona.callname_other}。")
+    lines.append(f"\n★重要: {max_sentences}文以内で返答しろ。絶対に超えるな。★")
+    
+    # AI臭さ防止ルール
+    lines.append(ANTI_AI_RULES)
+    lines.append(char_specific)
 
+    # Deep Values（短縮版）
     deep_values = persona.deep_values or {}
-    lines.append("\n[Deep Values]")
     if deep_values:
-        lines.append(f"core_belief: {deep_values.get('core_belief', '')}")
-        decision_priority = deep_values.get("decision_priority", {})
-        if decision_priority:
-            dp = ", ".join(f"{k}={v}" for k, v in decision_priority.items())
-            lines.append(f"decision_priority: {dp}")
-        collaboration = deep_values.get("collaboration", {})
-        if collaboration:
-            lines.append(
-                "collaboration: "
-                + f"strengths={collaboration.get('strengths', [])}, "
-                + f"asks_from_other={collaboration.get('asks_from_other', [])}"
-            )
+        lines.append(f"\n[価値観] {deep_values.get('core_belief', '')}")
 
-    style = persona.style or {}
-    lines.append("\n[Surface Style]")
-    lines.append(
-        f"register={style.get('register', '')}, tempo={style.get('tempo', '')}, length={style.get('length', '')}"
-    )
-
-    lines.append(f"\n[state] {state}")
+    # 状態とトーン
+    lines.append(f"\n[今の状態] {state}")
     tone_notes = ctrl.get("tone_notes", [])
     if tone_notes:
-        lines.append(f"tone_notes: {', '.join(tone_notes)}")
+        lines.append(f"トーン: {', '.join(tone_notes)}")
 
+    # Few-shot（短い例を優先）
     if few_shot:
-        lines.append("\n[Few-shot]\n" + few_shot)
+        lines.append(f"\n[返答例]\n{few_shot}")
 
+    # RAG（あれば）
     if rag:
-        lines.append("\n[RAG]\n" + rag)
+        lines.append(f"\n[参考情報]\n{rag}")
 
     return "\n".join(lines).strip(), gen
