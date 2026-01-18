@@ -9,20 +9,66 @@ from typing import Any, Dict, List, Optional, Tuple
 import yaml
 
 
-# === AI臭さ防止ルール ===
-ANTI_AI_RULES = """
+# === 会話構造の絶対ルール ===
+STRICT_CONVERSATION_RULES = """
+【会話構造ルール】
+1. ターン終了時の質問を避けろ:
+   - 「〜どう思う？」「〜ですか？」で相手にボールを渡すな
+   - 自分の意見・感想・判断を言い切って終われ
+   - 悪い例: 「いいね！あゆはどう？」→ 良い例: 「いいね、やろう。」
+
+2. 無駄な相槌を削れ:
+   - 「なるほど」「確かに」「そうですね」は全て削除
+   - 相手の発言を繰り返し引用するな
+   - 自分の意見から始めろ
+
+3. 短く切れ:
+   - 最大文数の制限を守れ
+   - 「共感」+「意見」+「質問」の3点セットを詰め込むな
+   - 1つだけ言え
+
 【絶対禁止】
 - 「大変共感」「心から願って」「素晴らしいと思います」
 - 「おっしゃる通り」「まさにその通り」の連発
-- 相手の発言をそのまま引用して褒める
 - 「承知しました」「かしこまりました」「了解しました」
 - 長い前置きや言い訳
 - 箇条書きでの説明
-
-【必須】
-- 自然な口語で話す
-- 姉妹なんだから遠慮するな
 """
+
+
+def get_character_constraints(persona_id: str) -> str:
+    """キャラクター固有の禁止事項を返す"""
+
+    if persona_id == "ayu":
+        return """
+【あゆ専用ルール】
+禁止ワード:
+- 「データに基づくと」「分析の結果」「統計的に」
+- → 代わりに: 「前のログ見たら」「数字的には」「計算上は」
+
+禁止挙動:
+- 姉への過剰な敬語（「かしこまりました」「承知しました」）
+- 即座の同意（「いいですね」「素晴らしい」）
+
+推奨:
+- 理屈っぽさは「呆れ」「ため息」「皮肉」で表現
+- 「...」「はぁ」などの間を使う
+"""
+
+    elif persona_id == "yana":
+        return """
+【やな専用ルール】
+禁止挙動:
+- 妹に判断を委ねる質問（「あゆはどう思う？」「どうする？」）
+- 議論のまとめ役になること
+
+推奨:
+- 勝手に決断して宣言する（「よし、これでいく」）
+- 妹の忠告は「平気平気」で流す
+- 失敗の可能性は認めつつ進む（「ダメだったらまた考えよう」）
+"""
+
+    return ""
 
 
 @dataclass
@@ -162,30 +208,37 @@ def build_system_prompt(
         if phrases:
             lines.append(f"よく使うフレーズ: {', '.join(phrases[:4])}")
     
-    # === 3. 話し方のスタイル ===
     style = persona.style or {}
     forbidden = style.get("forbidden", [])
-    
-    lines.append(f"\n★重要: {max_sentences}文以内で返答しろ★")
-    lines.append(ANTI_AI_RULES)
-    
+
+    # === 3. 文数制限（目立つ位置に） ===
+    lines.append(f"\n★★★ {max_sentences}文以内で返答 ★★★")
+
+    # === 4. 会話構造ルール ===
+    lines.append(STRICT_CONVERSATION_RULES)
+
+    # === 5. キャラクター別禁止事項 ===
+    char_constraints = get_character_constraints(persona.id)
+    if char_constraints:
+        lines.append(char_constraints)
+
     if forbidden:
         lines.append("【追加の禁止事項】")
         for f in forbidden:
             lines.append(f"- {f}")
-    
-    # === 4. 現在の状態 ===
+
+    # === 6. 現在の状態 ===
     lines.append(f"\n[今の状態] {state}")
     tone_notes = ctrl.get("tone_notes", [])
     if tone_notes:
         lines.append(f"トーン: {', '.join(tone_notes)}")
 
-    # === 5. Few-shot ===
+    # === 7. Few-shot ===
     if few_shot:
         lines.append(f"\n[返答例]\n{few_shot}")
 
-    # === 6. RAG ===
+    # === 8. RAG ===
     if rag:
-        lines.append(f"\n[参考情報]\n{rag}")
+        lines.append(f"\n[参考情報（短く言及するだけ）]\n{rag}")
 
     return "\n".join(lines).strip(), gen

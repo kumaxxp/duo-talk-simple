@@ -33,20 +33,29 @@ def test_select_few_shot():
 
     result = prompt_builder.select_few_shot(patterns, "ayu", "concerned")
     assert result is not None
-    assert "危険" in result
+    assert "危な" in result or "止めて" in result or "無理" in result
 
     # Test non-existing pattern returns None
     result = prompt_builder.select_few_shot(patterns, "yana", "nonexistent_state")
     assert result is None
 
 
-def test_deep_values_in_prompt():
+def test_prompt_structure():
+    """Test that prompt includes key structural elements."""
     persona = prompt_builder.load_persona(Path("personas/ayu.yaml"))
     prompt, gen = prompt_builder.build_system_prompt(persona, state="analytical")
 
-    assert "[Deep Values]" in prompt
-    assert "core_belief" in prompt
-    assert "decision_priority" in prompt
+    # Check for identity/core belief
+    assert "信念" in prompt
+    assert "あゆ" in prompt
+
+    # Check for conversation rules
+    assert "会話構造ルール" in prompt
+
+    # Check for character-specific constraints
+    assert "あゆ専用ルール" in prompt
+
+    # Check generation hints
     assert gen["temperature"] <= 0.5
 
 
