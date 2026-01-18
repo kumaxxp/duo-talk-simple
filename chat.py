@@ -12,6 +12,7 @@ from core.ollama_client import OllamaClient
 from core.rag_engine import RAGEngine
 from core.character import Character
 from core.duo_dialogue import DuoDialogueManager, DialogueState
+from core.conversation_logger import ConversationLogger
 
 
 def setup_logging(config: dict) -> logging.Logger:
@@ -134,7 +135,9 @@ def print_welcome(config: dict):
     print(message)
 
 
-def run_duo_dialogue(characters: dict, config: dict, topic: str):
+def run_duo_dialogue(
+    characters: dict, config: dict, topic: str, conv_logger: ConversationLogger = None
+):
     """AI同士対話モードを実行"""
     logger = logging.getLogger(__name__)
 
@@ -198,9 +201,15 @@ def run_duo_dialogue(characters: dict, config: dict, topic: str):
     print("=" * 50)
 
     # サマリー表示
+    summary = None
     if manager.dialogue_history:
+        summary = manager.get_summary()
         print("\n【対話まとめ】")
-        print(manager.get_summary())
+        print(summary)
+
+    # 会話ログに記録
+    if conv_logger:
+        conv_logger.log_duo_dialogue(topic, manager.dialogue_history, summary)
 
     # 履歴をクリア（次の通常会話に影響しないように）
     characters["yana"].clear_history()
@@ -232,6 +241,16 @@ def main():
     if "yana" in char_names:
         current_char_idx = char_names.index("yana")
 
+    # 会話ログ初期化
+    conv_log_config = config.get("conversation_log", {})
+    conv_logger = None
+    if conv_log_config.get("enabled", True):
+        conv_logger = ConversationLogger(
+            log_dir=conv_log_config.get("log_dir", "./logs/conversations")
+        )
+        conv_logger.start_session(char_names[current_char_idx])
+        logger.info(f"会話ログ開始: {conv_logger.current_log_path}")
+
     # デバッグモード
     dev_config = config.get("development", {})
     debug_mode = dev_config.get("debug_mode", False)
@@ -256,18 +275,26 @@ def main():
                 command = user_input.lower()
 
                 if command == "/exit" or command == "/quit":
+                    if conv_logger:
+                        log_path = conv_logger.end_session()
+                        print(f"会話ログ保存: {log_path}")
                     print("さようなら!")
                     break
 
                 elif command == "/switch":
                     # 次のキャラクターに切り替え
                     current_char_idx = (current_char_idx + 1) % len(char_names)
-                    print(f"キャラクター切り替え: {char_names[current_char_idx]}")
+                    new_char = char_names[current_char_idx]
+                    print(f"キャラクター切り替え: {new_char}")
+                    if conv_logger:
+                        conv_logger.log_command("/switch", f"-> {new_char}")
                     continue
 
                 elif command == "/clear":
                     characters[current_char].clear_history()
                     print("会話履歴をクリアしました")
+                    if conv_logger:
+                        conv_logger.log_command("/clear")
                     continue
 
                 elif command == "/status":
@@ -283,6 +310,8 @@ def main():
                     print("  /duo <お題> - AI姉妹対話モード")
                     print("  /debug  - RAGデバッグ表示切替")
                     print("  /exit   - 終了")
+                    if conv_logger:
+                        print(f"\n会話ログ: {conv_logger.current_log_path}")
                     continue
 
                 elif user_input.lower().startswith("/duo "):
@@ -292,7 +321,9 @@ def main():
                         print("使い方: /duo <お題>")
                         print("例: /duo JetRacerのセンサー配置を改善したい")
                         continue
-                    run_duo_dialogue(characters, config, topic)
+                    if conv_logger:
+                        conv_logger.log_command("/duo", topic)
+                    run_duo_dialogue(characters, config, topic, conv_logger)
                     continue
 
                 elif command == "/duo":
@@ -315,6 +346,11 @@ def main():
             character = characters[current_char]
             response = character.respond(user_input)
 
+            # 会話ログ記録
+            if conv_logger:
+                conv_logger.log_message("user", user_input)
+                conv_logger.log_message("assistant", response, character=current_char)
+
             # 応答表示
             ui_config = config.get("ui", {})
             if ui_config.get("show_character_name", True):
@@ -335,10 +371,16 @@ def main():
                 print("=" * 40)
 
         except KeyboardInterrupt:
-            print("\n\n中断されました。さようなら!")
+            if conv_logger:
+                log_path = conv_logger.end_session()
+                print(f"\n会話ログ保存: {log_path}")
+            print("\n中断されました。さようなら!")
             break
         except EOFError:
-            print("\n\nさようなら!")
+            if conv_logger:
+                log_path = conv_logger.end_session()
+                print(f"\n会話ログ保存: {log_path}")
+            print("\nさようなら!")
             break
         except Exception as e:
             logger.error(f"エラー: {e}")

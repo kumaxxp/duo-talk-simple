@@ -101,6 +101,11 @@ duo_dialogue:
   show_turn_count: true      # ターン数を表示
   typing_delay: 0.5          # 発言間の遅延（秒）
 
+# ===== 会話ログ設定 =====
+conversation_log:
+  enabled: true              # 会話ログを有効化
+  log_dir: "./logs/conversations"  # ログ保存ディレクトリ
+
 # ===== ロギング設定 =====
 logging:
   level: "INFO"              # DEBUG, INFO, WARNING, ERROR, CRITICAL
@@ -143,11 +148,13 @@ ui:
   welcome_message: |
     === duo-talk-simple ===
     やなとあゆがJetRacerについてお話しします
-    
+
     コマンド:
       /switch  - キャラクター切り替え
+      /duo <お題> - AI姉妹対話モード
       /clear   - 会話履歴クリア
-      /exit    - 終了
+      /help    - コマンド一覧
+      /exit    - 終了（ログ保存）
 
 # ===== 開発・デバッグ設定 =====
 development:
