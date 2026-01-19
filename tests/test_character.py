@@ -96,3 +96,42 @@ class TestCharacter:
 
         # 最大10ターン（20メッセージ）に制限
         assert len(test_character.history) == 20
+
+    def test_all_states_have_few_shot_patterns(self):
+        """TC-C-008: 全状態にFew-shotパターンが存在することを確認"""
+        from core import prompt_builder
+
+        # ペルソナ読み込み
+        yana_persona = prompt_builder.load_persona("./personas/yana.yaml")
+        ayu_persona = prompt_builder.load_persona("./personas/ayu.yaml")
+
+        # Few-shotパターン読み込み
+        patterns = prompt_builder.load_few_shot_patterns(
+            "./patterns/few_shot_patterns.yaml"
+        )
+
+        # やなの全状態にパターンがあるか確認
+        for state in yana_persona.required_states:
+            matching = [
+                p for p in patterns
+                if p.get("persona") == "yana" and p.get("state") == state
+            ]
+            assert len(matching) >= 1, f"やな: {state} 状態のパターンがありません"
+
+        # あゆの全状態にパターンがあるか確認
+        for state in ayu_persona.required_states:
+            matching = [
+                p for p in patterns
+                if p.get("persona") == "ayu" and p.get("state") == state
+            ]
+            assert len(matching) >= 1, f"あゆ: {state} 状態のパターンがありません"
+
+    def test_assets_passed_to_character(self, test_character):
+        """TC-C-009: assetsがCharacterに渡されていることを確認"""
+        # assets属性が存在する
+        assert hasattr(test_character, "assets")
+        assert isinstance(test_character.assets, dict)
+
+        # few_shot_patternsがロードされている（パスが指定されていれば）
+        assert hasattr(test_character, "few_shot_patterns")
+        assert isinstance(test_character.few_shot_patterns, list)
