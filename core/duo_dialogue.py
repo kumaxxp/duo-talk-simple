@@ -52,11 +52,14 @@ def validate_response_quality(response: str, character_id: str) -> List[str]:
 
     Args:
         response: The character's response text.
-        character_id: The character ID ("yana" or "ayu").
+        character_id: The character ID ("yana" or "ayu"). Reserved for
+            future character-specific validation rules.
 
     Returns:
         List of issue types found (e.g., ["question_baton_toss", "ai_ism"]).
     """
+    # character_id is reserved for future use (e.g., character-specific patterns)
+    _ = character_id
     issues: List[str] = []
 
     # Check for question baton-toss (ending with question to other)

@@ -11,7 +11,7 @@ Ollama + ChromaDB (RAG) で構築されたCLIアプリケーション。
 | LLM | Ollama (gemma3:12b) |
 | 埋め込み | mxbai-embed-large |
 | ベクトルDB | ChromaDB |
-| テスト | pytest (93% coverage) |
+| テスト | pytest (94% coverage, 101 tests) |
 
 ---
 
@@ -184,16 +184,16 @@ pytest tests/ -v
 tests/
 ├── test_ollama_client.py      # OllamaClient単体テスト (7)
 ├── test_rag_engine.py         # RAGEngine単体テスト (8)
-├── test_character.py          # Character単体テスト (9)
+├── test_character.py          # Character単体テスト (10)
 ├── test_prompt_builder.py     # PromptBuilder単体テスト (4)
-├── test_duo_dialogue.py       # DuoDialogue単体テスト (13)
-├── test_conversation_logger.py # Logger単体テスト (9)
+├── test_duo_dialogue.py       # DuoDialogue単体テスト (34)  ★Phase 1拡充
+├── test_conversation_logger.py # Logger単体テスト (16)
 ├── test_integration.py        # 統合テスト (5)
 ├── test_performance.py        # パフォーマンステスト (5)
 └── test_e2e_cli.py            # CLI E2Eテスト (12) [pexpect]
 ```
 
-**合計**: 85テスト
+**合計**: 101テスト
 
 ---
 

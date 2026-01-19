@@ -139,7 +139,7 @@ pytest tests/test_character.py::TestCharacter::test_init -v
 ### Coverage Target
 
 - **Minimum**: 80%
-- **Current**: 93%
+- **Current**: 94%
 
 ```bash
 # View coverage report
