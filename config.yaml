@@ -95,7 +95,11 @@ characters:
 duo_dialogue:
   # 対話制御
   max_turns: 10              # 最大往復数
+  min_turns: 3               # 収束判定開始までの最小ターン数
   first_speaker: "yana"      # 最初に発言するキャラ
+
+  # 履歴管理
+  max_history_verbatim: 4    # 直接表示する最大履歴数（超過分は要約）
 
   # 表示設定
   show_turn_count: true      # ターン数を表示
