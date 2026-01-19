@@ -1,7 +1,7 @@
 # Data Models Codemap
 
-**Generated**: 2026-01-19 18:00
-**Freshness**: Current (Model switching added)
+**Generated**: 2026-01-19 19:45
+**Freshness**: Current (Phase 2B perspective markers complete)
 
 ---
 
@@ -119,8 +119,8 @@ Knowledge files can contain perspective markers for character-specific extractio
 
 **Files Using This Format**:
 - `knowledge/jetracer_tech_with_perspectives.txt` ✅
-- `knowledge/jetracer_tech.txt` (Phase 2B target)
-- `knowledge/sisters_shared.txt` (Phase 2B target)
+- `knowledge/jetracer_tech.txt` ✅ (Phase 2B complete)
+- `knowledge/sisters_shared.txt` ✅ (Phase 2B complete)
 
 ---
 

@@ -1,7 +1,7 @@
 # Core Module Codemap
 
-**Generated**: 2026-01-19 18:00
-**Freshness**: Current (Model switching added)
+**Generated**: 2026-01-19 19:45
+**Freshness**: Current (Phase 2B perspective markers complete)
 
 ---
 
@@ -12,8 +12,8 @@
 | ollama_client.py | 1 | 0 | 155 |
 | rag_engine.py | 1 | 0 | 299 |
 | character.py | 1 | 0 | 175 |
-| prompt_builder.py | 1 | 5 | 256 |
-| duo_dialogue.py | 2 | 0 | 330 |
+| prompt_builder.py | 1 | 6 | 261 |
+| duo_dialogue.py | 2 | 1 | 330 |
 | conversation_logger.py | 1 | 0 | 156 |
 
 ---

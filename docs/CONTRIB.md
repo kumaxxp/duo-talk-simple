@@ -113,6 +113,7 @@ refactor: clean dead code in chat.py
 | Unit | test_prompt_builder.py | PromptBuilder unit tests |
 | Unit | test_duo_dialogue.py | DuoDialogue unit tests |
 | Unit | test_conversation_logger.py | Logger unit tests |
+| Unit | test_knowledge_perspectives.py | Knowledge perspective markers |
 | Integration | test_integration.py | Full system tests |
 | Performance | test_performance.py | Response time tests |
 | E2E | test_e2e_cli.py | CLI interaction tests |
@@ -139,7 +140,7 @@ pytest tests/test_character.py::TestCharacter::test_init -v
 ### Coverage Target
 
 - **Minimum**: 80%
-- **Current**: 94% (114 tests)
+- **Current**: 94% (125 tests)
 
 ```bash
 # View coverage report
@@ -266,7 +267,18 @@ logging:          # Logging settings
 ### 3. Adding Knowledge
 
 1. Create file in `knowledge/`
-2. Add to `config.yaml`:
+2. Add perspective markers for character-specific RAG:
+   ```
+   【客観】
+   - Objective facts shared by all characters
+
+   【やなの視点】
+   - Yana's action-oriented perspective
+
+   【あゆの視点】
+   - Ayu's analytical perspective
+   ```
+3. Add to `config.yaml`:
    ```yaml
    knowledge:
      sources:

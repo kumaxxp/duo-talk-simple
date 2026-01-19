@@ -1,7 +1,7 @@
 # Architecture Codemap
 
-**Generated**: 2026-01-19 18:00
-**Freshness**: Current (Model switching added)
+**Generated**: 2026-01-19 19:45
+**Freshness**: Current (Phase 2B perspective markers complete)
 
 ---
 
@@ -100,12 +100,12 @@ core/conversation_logger.py
 | Module | Lines | Responsibility |
 |--------|-------|----------------|
 | chat.py | 419 | CLI entry point, command handling, /model command |
-| character.py | 173 | Character response generation |
-| duo_dialogue.py | 186 | AI-to-AI dialogue orchestration |
-| prompt_builder.py | 256 | System prompt construction |
+| character.py | 175 | Character response generation |
+| duo_dialogue.py | 330 | AI-to-AI dialogue orchestration |
+| prompt_builder.py | 261 | System prompt construction |
 | rag_engine.py | 299 | Vector search & knowledge management |
 | ollama_client.py | 155 | LLM API interaction, model switching |
-| conversation_logger.py | 157 | Conversation persistence |
+| conversation_logger.py | 156 | Conversation persistence |
 
 ---
 
@@ -175,15 +175,16 @@ User Input
 
 ```
 tests/
-├── test_ollama_client.py    → core/ollama_client.py (87%)
-├── test_rag_engine.py       → core/rag_engine.py (93%)
-├── test_character.py        → core/character.py (88%)
-├── test_prompt_builder.py   → core/prompt_builder.py (91%)
-├── test_duo_dialogue.py     → core/duo_dialogue.py (99%)
-├── test_conversation_logger → core/conversation_logger.py (98%)
-├── test_integration.py      → Full system (integration)
-├── test_performance.py      → Performance benchmarks
-└── test_e2e_cli.py          → chat.py (E2E)
+├── test_ollama_client.py        → core/ollama_client.py (87%)
+├── test_rag_engine.py           → core/rag_engine.py (94%)
+├── test_character.py            → core/character.py (88%)
+├── test_prompt_builder.py       → core/prompt_builder.py (91%)
+├── test_duo_dialogue.py         → core/duo_dialogue.py (99%)
+├── test_conversation_logger.py  → core/conversation_logger.py (98%)
+├── test_knowledge_perspectives  → knowledge/*.txt (Phase 2B)
+├── test_integration.py          → Full system (integration)
+├── test_performance.py          → Performance benchmarks
+└── test_e2e_cli.py              → chat.py (E2E)
 ```
 
-**Overall Coverage**: 94%
+**Overall Coverage**: 94% (125 tests)

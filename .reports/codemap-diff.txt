@@ -1,82 +1,54 @@
-# Codemap Update Report
-
-**Generated**: 2026-01-19
-**Status**: Initial Creation
-
----
+# Codemap Diff Report
+Generated: 2026-01-19 19:45
 
 ## Summary
+- Total codemaps updated: 3
+- Diff percentage: ~8% (minor updates)
+- Approval required: No (< 30% threshold)
 
-This is the initial codemap generation for duo-talk-simple project.
-No previous codemaps existed, so this represents 100% new content.
+## Changes by File
 
----
+### docs/codemaps/core.md
+| Field | Previous | Current | Change |
+|-------|----------|---------|--------|
+| Generated | 2026-01-19 18:00 | 2026-01-19 19:45 | timestamp |
+| Freshness | Model switching added | Phase 2B complete | update |
+| prompt_builder.py Functions | 5 | 6 | +1 |
+| prompt_builder.py Lines | 256 | 261 | +5 |
+| duo_dialogue.py Functions | 0 | 1 | +1 |
 
-## Files Created
+### docs/codemaps/architecture.md
+| Field | Previous | Current | Change |
+|-------|----------|---------|--------|
+| Generated | 2026-01-19 18:00 | 2026-01-19 19:45 | timestamp |
+| Freshness | Model switching added | Phase 2B complete | update |
+| character.py Lines | 173 | 175 | +2 |
+| duo_dialogue.py Lines | 186 | 330 | +144 (corrected) |
+| prompt_builder.py Lines | 256 | 261 | +5 |
+| conversation_logger.py Lines | 157 | 156 | -1 |
 
-| File | Size | Content |
-|------|------|---------|
-| docs/codemaps/architecture.md | 5.4KB | System overview, dependency graph, data flow |
-| docs/codemaps/core.md | 10.2KB | Module APIs, class definitions, functions |
-| docs/codemaps/data.md | 8.1KB | Config schema, persona schema, runtime structures |
+Note: duo_dialogue.py line count was previously incorrect (186).
+Actual file has 330 lines. This was a documentation error, not a code change.
 
-**Total**: 3 files, ~23.7KB
+### docs/codemaps/data.md
+| Field | Previous | Current | Change |
+|-------|----------|---------|--------|
+| Generated | 2026-01-19 18:00 | 2026-01-19 19:45 | timestamp |
+| Freshness | Model switching added | Phase 2B complete | update |
+| jetracer_tech.txt | Phase 2B target | ✅ Complete | done |
+| sisters_shared.txt | Phase 2B target | ✅ Complete | done |
 
----
+## Phase 2B Completion Summary
+- Knowledge files with perspective markers: 3/3 (100%)
+- Test coverage: 94% (125 tests)
+- New test file: test_knowledge_perspectives.py (11 tests)
 
-## Coverage
-
-### Modules Documented
-
-| Module | Lines | Classes | Functions |
-|--------|-------|---------|-----------|
-| chat.py | 391 | 0 | 6 |
-| core/ollama_client.py | 141 | 1 | 0 |
-| core/rag_engine.py | 231 | 1 | 0 |
-| core/character.py | 173 | 1 | 0 |
-| core/prompt_builder.py | 256 | 1 | 5 |
-| core/duo_dialogue.py | 186 | 2 | 0 |
-| core/conversation_logger.py | 157 | 1 | 0 |
-
-### Configuration Files Documented
-
-- config.yaml (main configuration)
-- personas/*.yaml (character definitions)
-- patterns/few_shot_patterns.yaml (few-shot examples)
-- director/director_rules.yaml (director intervention)
-
-### Data Structures Documented
-
-- Message (conversation format)
-- RAGResult (search result format)
-- DialogueEntry (duo dialogue format)
-- GenerationConfig (LLM parameters)
-- Persona (dataclass)
-- DialogueState (enum)
-
----
-
-## Architecture Diagrams
-
-1. System Overview - Full component hierarchy
-2. Dependency Graph - Import relationships
-3. Data Flow - User input to response
-4. Cross-Module Dependencies - Core module interactions
-
----
-
-## Recommendations
-
-1. **Keep Updated**: Run /update-codemaps after significant changes
-2. **Review Coverage**: Ensure new modules are added to codemaps
-3. **Validate Accuracy**: Cross-check with actual source code
-
----
-
-## Next Update
-
-Run `/update-codemaps` after:
-- Adding new modules
-- Changing API signatures
-- Modifying data structures
-- Significant refactoring
+## Files Analyzed
+- core/ollama_client.py: 155 lines
+- core/rag_engine.py: 299 lines
+- core/character.py: 175 lines
+- core/prompt_builder.py: 261 lines
+- core/duo_dialogue.py: 330 lines
+- core/conversation_logger.py: 156 lines
+- chat.py: 419 lines
+- Total: 1795 lines
