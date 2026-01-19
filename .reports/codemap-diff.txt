@@ -1,54 +1,94 @@
-# Codemap Diff Report
-Generated: 2026-01-19 19:45
+# Codemap Update Diff Report
+
+Generated: 2026-01-20
+Previous Version: Phase 2B (perspective markers)
+Current Version: Phase 5 (Director/NoveltyGuard integration)
 
 ## Summary
-- Total codemaps updated: 3
-- Diff percentage: ~8% (minor updates)
-- Approval required: No (< 30% threshold)
 
-## Changes by File
+| Metric | Before | After | Change |
+|--------|--------|-------|--------|
+| Core modules | 6 | 9 | +50% |
+| Total lines (core/) | ~1376 | 2427 | +76% |
+| Test files | 10 | 12 | +20% |
+| Total tests | 108 | 206 | +91% |
+| Coverage | 94% | 91% | -3% |
+
+## New Files Added
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| core/types.py | 41 | Shared type definitions (DirectorStatus, DirectorEvaluation, LoopCheckResult) |
+| core/director.py | 605 | Quality evaluation with static checks and LLM scoring |
+| core/novelty_guard.py | 272 | Loop detection and escape strategy injection |
+| tests/test_director.py | ~400 | Director unit tests (53 tests) |
+| tests/test_novelty_guard.py | ~300 | NoveltyGuard unit tests (27 tests) |
+
+## Modified Files
+
+| File | Before | After | Change |
+|------|--------|-------|--------|
+| core/duo_dialogue.py | 330 | 462 | +40% |
+
+### duo_dialogue.py Changes
+- Added Director integration
+- Added NoveltyGuard integration
+- New method: next_turn_with_quality_check()
+- New method: get_quality_report()
+- Config support for director/novelty_guard settings
+
+## Updated Codemaps
 
 ### docs/codemaps/core.md
-| Field | Previous | Current | Change |
-|-------|----------|---------|--------|
-| Generated | 2026-01-19 18:00 | 2026-01-19 19:45 | timestamp |
-| Freshness | Model switching added | Phase 2B complete | update |
-| prompt_builder.py Functions | 5 | 6 | +1 |
-| prompt_builder.py Lines | 256 | 261 | +5 |
-| duo_dialogue.py Functions | 0 | 1 | +1 |
+- Module Index: Added 3 new modules
+- New sections: core/types.py, core/director.py, core/novelty_guard.py
+- Updated duo_dialogue.py section with quality control integration
+- Updated Cross-Module Dependencies diagram
+- Updated State Management table
 
 ### docs/codemaps/architecture.md
-| Field | Previous | Current | Change |
-|-------|----------|---------|--------|
-| Generated | 2026-01-19 18:00 | 2026-01-19 19:45 | timestamp |
-| Freshness | Model switching added | Phase 2B complete | update |
-| character.py Lines | 173 | 175 | +2 |
-| duo_dialogue.py Lines | 186 | 330 | +144 (corrected) |
-| prompt_builder.py Lines | 256 | 261 | +5 |
-| conversation_logger.py Lines | 157 | 156 | -1 |
-
-Note: duo_dialogue.py line count was previously incorrect (186).
-Actual file has 330 lines. This was a documentation error, not a code change.
+- System Overview: Added Quality Control box
+- Dependency Graph: Added director/novelty_guard dependencies
+- Module Responsibilities: Added 3 new modules
+- Test Coverage Map: Updated test counts (206 tests)
 
 ### docs/codemaps/data.md
-| Field | Previous | Current | Change |
-|-------|----------|---------|--------|
-| Generated | 2026-01-19 18:00 | 2026-01-19 19:45 | timestamp |
-| Freshness | Model switching added | Phase 2B complete | update |
-| jetracer_tech.txt | Phase 2B target | ✅ Complete | done |
-| sisters_shared.txt | Phase 2B target | ✅ Complete | done |
+- Added DirectorStatus enum
+- Added DirectorEvaluation dataclass
+- Added LoopCheckResult dataclass
+- Added LoopBreakStrategy enum
+- Updated config.yaml schema with director/novelty_guard settings
 
-## Phase 2B Completion Summary
-- Knowledge files with perspective markers: 3/3 (100%)
-- Test coverage: 94% (125 tests)
-- New test file: test_knowledge_perspectives.py (11 tests)
+### CLAUDE.md
+- Updated test count: 108 → 206
+- Updated coverage: 94% → 91%
+- Added Director, NoveltyGuard, Types to components table
+- New section: 品質評価システム（Phase 5）
+- Updated テスト構造 section with new test files
+- Updated config.yaml sections
 
-## Files Analyzed
-- core/ollama_client.py: 155 lines
-- core/rag_engine.py: 299 lines
-- core/character.py: 175 lines
-- core/prompt_builder.py: 261 lines
-- core/duo_dialogue.py: 330 lines
-- core/conversation_logger.py: 156 lines
-- chat.py: 419 lines
-- Total: 1795 lines
+## Diff Percentage
+
+| Codemap | Lines Changed | Total Lines | Diff % |
+|---------|---------------|-------------|--------|
+| core.md | +200 | 378 | 53% |
+| architecture.md | +50 | 192 | 26% |
+| data.md | +60 | 322 | 19% |
+| CLAUDE.md | +40 | 275 | 15% |
+
+**Overall Change: ~35%** (significant update due to Phase 5 quality control integration)
+
+## Verification Checklist
+
+- [x] Module Index updated with line counts
+- [x] New classes documented (Director, NoveltyGuard, types)
+- [x] Cross-module dependencies updated
+- [x] Test coverage map updated
+- [x] Config schema documented
+- [x] Freshness timestamps updated
+
+## Notes
+
+- Phase 5 represents the final integration phase of the quality evaluation migration
+- Coverage decreased slightly (94%→91%) due to new modules, but remains above 90% target
+- All new code follows existing patterns and conventions

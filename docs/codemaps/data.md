@@ -1,7 +1,7 @@
 # Data Models Codemap
 
-**Generated**: 2026-01-19 19:45
-**Freshness**: Current (Phase 2B perspective markers complete)
+**Generated**: 2026-01-19
+**Freshness**: Current (Phase 5 Director/NoveltyGuard integration complete)
 
 ---
 
@@ -67,9 +67,21 @@ characters:
 
 duo_dialogue:
   max_turns: int         # 10
+  min_turns: int         # 3
   first_speaker: str     # "yana"
   show_turn_count: bool  # true
   typing_delay: float    # 0.5
+  max_retries: int       # 3
+  director:              # Phase 5 quality control
+    enabled: bool        # false
+    rules_path: str      # "director/director_rules.yaml"
+    enable_static_checks: bool  # true
+    enable_llm_scoring: bool    # false
+  novelty_guard:         # Phase 5 loop detection
+    enabled: bool        # false
+    window_size: int     # 3
+    max_topic_depth: int # 3
+    rules_path: str      # "director/director_rules.yaml"
 
 conversation_log:
   enabled: bool          # true
@@ -208,6 +220,55 @@ Message = TypedDict('Message', {
     'role': str,        # "user" | "assistant" | "system"
     'content': str,     # Message text
 })
+```
+
+### DirectorStatus (Phase 1)
+
+```python
+# Quality evaluation status
+class DirectorStatus(Enum):
+    PASS = "PASS"    # Good quality, proceed
+    WARN = "WARN"    # Minor issues, accept with warning
+    RETRY = "RETRY"  # Quality failure, regenerate
+```
+
+### DirectorEvaluation (Phase 1)
+
+```python
+# Director evaluation result
+@dataclass
+class DirectorEvaluation:
+    status: DirectorStatus
+    checks: dict[str, Any]  # Individual check results
+    suggestion: str         # Improvement suggestion
+    scores: dict[str, float]  # LLM scoring results (Phase 4)
+    avg_score: float        # Average LLM score
+```
+
+### LoopCheckResult (Phase 2)
+
+```python
+# NoveltyGuard loop detection result
+@dataclass
+class LoopCheckResult:
+    loop_detected: bool      # Whether loop was detected
+    stuck_nouns: list[str]   # Repeated nouns
+    strategy: str            # Selected escape strategy
+    injection: str           # Context injection text
+    consecutive_count: int   # Consecutive loop count
+```
+
+### LoopBreakStrategy (Phase 2)
+
+```python
+# Loop escape strategies
+class LoopBreakStrategy(Enum):
+    SPECIFIC_SLOT = "specific_slot"      # 具体的数値を要求
+    CONFLICT_WITHIN = "conflict_within"  # 姉妹意見対立を促す
+    ACTION_NEXT = "action_next"          # 次の行動決定を促す
+    PAST_REFERENCE = "past_reference"    # 過去エピソード参照
+    FORCE_WHY = "force_why"              # なぜ？で掘り下げ
+    CHANGE_TOPIC = "change_topic"        # 最終手段：話題変更
 ```
 
 ### RAGResult

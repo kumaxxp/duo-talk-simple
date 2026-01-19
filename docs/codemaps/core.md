@@ -1,7 +1,7 @@
 # Core Module Codemap
 
-**Generated**: 2026-01-19 19:45
-**Freshness**: Current (Phase 2B perspective markers complete)
+**Generated**: 2026-01-19
+**Freshness**: Current (Phase 5 Director/NoveltyGuard integration complete)
 
 ---
 
@@ -13,8 +13,11 @@
 | rag_engine.py | 1 | 0 | 299 |
 | character.py | 1 | 0 | 175 |
 | prompt_builder.py | 1 | 6 | 261 |
-| duo_dialogue.py | 2 | 1 | 330 |
+| duo_dialogue.py | 2 | 1 | 462 |
 | conversation_logger.py | 1 | 0 | 156 |
+| **types.py** | 2 | 0 | 41 |
+| **director.py** | 1 | 0 | 605 |
+| **novelty_guard.py** | 2 | 0 | 272 |
 
 ---
 
@@ -243,7 +246,7 @@ class DialogueState(Enum):
 
 ### Dataclass: DuoDialogueManager
 
-AI-to-AI dialogue orchestration.
+AI-to-AI dialogue orchestration with quality control integration.
 
 ```python
 @dataclass
@@ -262,11 +265,21 @@ class DuoDialogueManager:
     first_speaker: str
     convergence_keywords: List[str]
 
+    # Quality control (Phase 5)
+    director: Optional[Director]        # Quality evaluator
+    novelty_guard: Optional[NoveltyGuard]  # Loop detector
+    max_retries: int = 3
+
     def start_dialogue(topic: str) -> None
         # Start new dialogue session
 
     def next_turn() -> Tuple[str, str]
         # Execute next turn, return (speaker, response)
+
+    def next_turn_with_quality_check() -> Tuple[str, str, Dict[str, Any]]
+        # Execute turn with Director evaluation and retry
+        # Returns (speaker, response, quality_info)
+        # quality_info: {status, attempts, checks, novelty_check}
 
     def should_continue() -> bool
         # Check if dialogue should continue
@@ -277,6 +290,9 @@ class DuoDialogueManager:
     def get_summary() -> str
         # Generate dialogue summary
 
+    def get_quality_report() -> Dict[str, Any]
+        # Generate quality report for entire dialogue
+
     def _get_current_speaker() -> Character
         # Determine next speaker
 
@@ -284,7 +300,175 @@ class DuoDialogueManager:
         # Build context prompt
 ```
 
-**Dependencies**: dataclasses, enum, Character
+**Dependencies**: dataclasses, enum, Character, Director, NoveltyGuard
+
+---
+
+## core/types.py
+
+### Enum: DirectorStatus
+
+Quality evaluation result status.
+
+```python
+class DirectorStatus(Enum):
+    PASS = "PASS"    # Good quality, proceed
+    WARN = "WARN"    # Minor issues, accept with warning
+    RETRY = "RETRY"  # Quality failure, regenerate
+```
+
+### Dataclass: DirectorEvaluation
+
+Director evaluation result container.
+
+```python
+@dataclass
+class DirectorEvaluation:
+    status: DirectorStatus
+    checks: dict[str, Any] = field(default_factory=dict)
+    suggestion: str = ""
+    scores: dict[str, float] = field(default_factory=dict)
+    avg_score: float = 0.0
+```
+
+### Dataclass: LoopCheckResult
+
+NoveltyGuard loop detection result.
+
+```python
+@dataclass
+class LoopCheckResult:
+    loop_detected: bool = False
+    stuck_nouns: list[str] = field(default_factory=list)
+    strategy: str = ""
+    injection: str = ""
+    consecutive_count: int = 0
+```
+
+**Dependencies**: dataclasses, enum
+
+---
+
+## core/director.py
+
+### Class: Director
+
+Quality evaluation system with static checks and LLM scoring.
+
+```python
+class Director:
+    def __init__(
+        rules_path: str = "director/director_rules.yaml",
+        enable_static_checks: bool = True,
+        enable_llm_scoring: bool = False,
+        llm_client: Optional[OllamaClient] = None
+    )
+
+    # Main evaluation method
+    def evaluate_response(
+        speaker: str,  # "yana" | "ayu"
+        response: str,
+        history: list[dict[str, str]] | None = None,
+        turn: int = 0
+    ) -> DirectorEvaluation
+
+    # Static checks (Phase 1)
+    def _check_format(response: str) -> dict
+        # Check line count, sentence count
+
+    def _check_praise_words(response: str, speaker: str) -> dict
+        # Check forbidden praise words (ayu only)
+
+    def _check_setting_consistency(response: str) -> dict
+        # Check for setting-breaking expressions
+
+    def _check_ai_isms(response: str) -> dict
+        # Check for AI-like expressions
+
+    # Tone markers (Phase 3)
+    def _check_tone_markers(speaker: str, response: str) -> dict
+        # 3-signal evaluation: marker_hit + vocab_hit + style_hit
+        # score >= 2 → PASS, score == 1 → WARN, score == 0 → RETRY
+
+    # LLM scoring (Phase 4)
+    def _score_with_llm(
+        speaker: str,
+        response: str,
+        history: list[dict[str, str]],
+        turn: int
+    ) -> dict
+        # 5-axis LLM evaluation
+```
+
+**5-Axis LLM Scoring**:
+| Axis | Description |
+|------|-------------|
+| frame_consistency | 状況に合った内容か |
+| roleplay | 姉妹の関係性が守られているか |
+| connection | 相手の発言を無視していないか |
+| information_density | 内容が薄すぎ/詰め込みすぎていないか |
+| naturalness | 自然な表現か |
+
+**Score Thresholds**: avg < 3.5 → RETRY / 3.5-4.0 → WARN / >= 4.0 → PASS
+
+**Dependencies**: yaml, re, OllamaClient, types
+
+---
+
+## core/novelty_guard.py
+
+### Enum: LoopBreakStrategy
+
+Loop escape strategies.
+
+```python
+class LoopBreakStrategy(Enum):
+    SPECIFIC_SLOT = "specific_slot"      # 具体的数値を要求
+    CONFLICT_WITHIN = "conflict_within"  # 姉妹意見対立を促す
+    ACTION_NEXT = "action_next"          # 次の行動決定を促す
+    PAST_REFERENCE = "past_reference"    # 過去エピソード参照
+    FORCE_WHY = "force_why"              # なぜ？で掘り下げ
+    CHANGE_TOPIC = "change_topic"        # 最終手段：話題変更
+```
+
+### Class: NoveltyGuard
+
+Loop detection and escape strategy injection.
+
+```python
+class NoveltyGuard:
+    def __init__(
+        window_size: int = 3,
+        max_topic_depth: int = 3,
+        rules_path: Optional[str] = None
+    )
+
+    def check_and_update(
+        text: str,
+        update: bool = True
+    ) -> LoopCheckResult
+        # Check for loop and optionally update state
+
+    def extract_nouns(text: str) -> set[str]
+        # Extract nouns using regex patterns
+
+    def reset() -> None
+        # Reset tracking state for new dialogue
+
+    def get_state() -> dict
+        # Get current state for inspection
+
+    def _select_strategy() -> LoopBreakStrategy
+        # Select escape strategy avoiding recent ones
+
+    def _generate_injection(
+        strategy: LoopBreakStrategy,
+        stuck_nouns: list[str]
+    ) -> str
+        # Generate context injection text
+```
+
+**Dependencies**: enum, dataclasses, yaml, re, types
 
 ---
 
@@ -344,12 +528,19 @@ class ConversationLogger:
 ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
 │  ollama_client  │◀─│    character    │─▶│   rag_engine    │
 └─────────────────┘  └────────┬────────┘  └─────────────────┘
-                             │                     │
-                             │                     │
-                             ▼                     │
-                    ┌─────────────────┐            │
-                    │  duo_dialogue   │────────────┘
-                    └─────────────────┘
+        │                    │                     │
+        │                    │                     │
+        │                    ▼                     │
+        │           ┌─────────────────┐            │
+        │           │  duo_dialogue   │────────────┘
+        │           └────────┬────────┘
+        │                    │
+        │         ┌──────────┴──────────┐
+        │         │                     │
+        │         ▼                     ▼
+        │  ┌─────────────────┐  ┌─────────────────┐
+        └─▶│    director     │  │  novelty_guard  │
+           └─────────────────┘  └─────────────────┘
                              │
                              ▼
                     ┌─────────────────┐
@@ -367,3 +558,5 @@ class ConversationLogger:
 | DuoDialogue | dialogue_history[] | In-memory |
 | ConversationLogger | _current_file | File system |
 | RAGEngine | ChromaDB collection | Persistent |
+| NoveltyGuard | _noun_history[], _used_strategies[] | In-memory |
+| Director | - (stateless) | - |

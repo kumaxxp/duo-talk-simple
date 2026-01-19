@@ -11,7 +11,7 @@ Ollama + ChromaDB (RAG) で構築されたCLIアプリケーション。
 | LLM | Ollama (gemma3:12b) |
 | 埋め込み | mxbai-embed-large |
 | ベクトルDB | ChromaDB |
-| テスト | pytest (94% coverage, 108 tests) |
+| テスト | pytest (91% coverage, 206 tests) |
 
 ---
 
@@ -51,8 +51,11 @@ User Input
 | RAGEngine | `core/rag_engine.py` | ChromaDBによる知識検索、ベクトル類似度検索、**視点抽出** |
 | Character | `core/character.py` | キャラクター応答生成、履歴管理、状態推定 |
 | PromptBuilder | `core/prompt_builder.py` | システムプロンプト構築、Persona読込、Few-shot選択 |
-| DuoDialogueManager | `core/duo_dialogue.py` | AI同士対話の制御、ターン管理、収束検知 |
+| DuoDialogueManager | `core/duo_dialogue.py` | AI同士対話の制御、ターン管理、収束検知、**品質管理統合** |
 | ConversationLogger | `core/conversation_logger.py` | 会話ログの永続化 |
+| **Director** | `core/director.py` | 応答品質評価、静的チェック、LLMスコアリング |
+| **NoveltyGuard** | `core/novelty_guard.py` | ループ検知、脱出戦略インジェクション |
+| **Types** | `core/types.py` | 共通型定義（DirectorStatus, LoopCheckResult等） |
 
 ### 視点抽出機能（Phase 2A）
 
@@ -68,6 +71,30 @@ RAGエンジンが知識を返す際、キャラクターの視点に応じて�
 【あゆの視点】
 - 統計分析が重要 ← あゆが検索時に取得
 ```
+
+### 品質評価システム（Phase 5）
+
+**Director**（応答品質評価）:
+- 静的チェック: 行数、文数、禁止表現、設定整合性、AI臭さ検出
+- 口調マーカー: 3信号判定（語尾 + 語彙 + 文体）
+- LLMスコアリング: 5軸評価（frame_consistency, roleplay, connection, information_density, naturalness）
+
+```python
+# 評価結果
+DirectorStatus.PASS   # 品質OK、続行
+DirectorStatus.WARN   # 軽微な問題、警告付きで続行
+DirectorStatus.RETRY  # 品質NG、再生成
+```
+
+**NoveltyGuard**（ループ検知）:
+- 名詞抽出による話題追跡
+- 6つの脱出戦略:
+  - `specific_slot`: 具体的数値を要求
+  - `conflict_within`: 姉妹意見対立を促す
+  - `action_next`: 次の行動決定を促す
+  - `past_reference`: 過去エピソード参照
+  - `force_why`: なぜ？で掘り下げ
+  - `change_topic`: 最終手段：話題変更
 
 ---
 
@@ -151,6 +178,8 @@ duo-talk-simple/
 | `knowledge` | 知識ベースファイル定義 |
 | `characters` | キャラクター別generation設定 |
 | `duo_dialogue` | AI同士対話設定（max_turns等） |
+| `duo_dialogue.director` | Director品質評価設定（Phase 5） |
+| `duo_dialogue.novelty_guard` | NoveltyGuardループ検知設定（Phase 5） |
 | `logging` | ログレベル、ファイル出力 |
 
 ---
@@ -168,7 +197,7 @@ duo-talk-simple/
 ### カバレッジ要件
 
 - **最低**: 80%
-- **現在**: 93%
+- **現在**: 91%
 - **目標**: 90%以上を維持
 
 ### コード品質
@@ -197,18 +226,21 @@ pytest tests/ -v
 
 ```
 tests/
-├── test_ollama_client.py      # OllamaClient単体テスト (7)
-├── test_rag_engine.py         # RAGEngine単体テスト (14)  ★Phase 2A拡充
-├── test_character.py          # Character単体テスト (11)  ★Phase 2A拡充
+├── test_ollama_client.py      # OllamaClient単体テスト (13)
+├── test_rag_engine.py         # RAGEngine単体テスト (14)
+├── test_character.py          # Character単体テスト (12)
 ├── test_prompt_builder.py     # PromptBuilder単体テスト (4)
-├── test_duo_dialogue.py       # DuoDialogue単体テスト (34)  ★Phase 1拡充
+├── test_duo_dialogue.py       # DuoDialogue単体テスト (34)
 ├── test_conversation_logger.py # Logger単体テスト (16)
+├── test_knowledge_perspectives.py # 視点抽出テスト (11)
+├── test_director.py           # Director品質評価テスト (53) ★Phase 1-4
+├── test_novelty_guard.py      # NoveltyGuardループ検知テスト (27) ★Phase 2
 ├── test_integration.py        # 統合テスト (5)
 ├── test_performance.py        # パフォーマンステスト (5)
 └── test_e2e_cli.py            # CLI E2Eテスト (12) [pexpect]
 ```
 
-**合計**: 108テスト
+**合計**: 206テスト
 
 ---
 

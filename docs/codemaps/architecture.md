@@ -1,7 +1,7 @@
 # Architecture Codemap
 
-**Generated**: 2026-01-19 19:45
-**Freshness**: Current (Phase 2B perspective markers complete)
+**Generated**: 2026-01-19
+**Freshness**: Current (Phase 5 Director/NoveltyGuard integration complete)
 
 ---
 
@@ -26,12 +26,15 @@
 │                   │  │ - start_      │  │ - log_message()     │
 │                   │  │   dialogue()  │  │ - log_duo_dialogue()│
 │                   │  │ - next_turn() │  │ - end_session()     │
-│                   │  │ - get_summary │  │                     │
+│                   │  │ - next_turn_  │  │                     │
+│                   │  │   with_       │  │                     │
+│                   │  │   quality_    │  │                     │
+│                   │  │   check() ★5 │  │                     │
 └─────────┬─────────┘  └───────┬───────┘  └─────────────────────┘
           │                    │
-          │     ┌──────────────┘
-          │     │
-          ▼     ▼
+          │     ┌──────────────┤
+          │     │              │
+          ▼     ▼              ▼
 ┌───────────────────┐  ┌───────────────┐  ┌─────────────────────┐
 │   OllamaClient    │  │  RAGEngine    │  │  PromptBuilder      │
 │ (ollama_client.py)│  │(rag_engine.py)│  │ (prompt_builder.py) │
@@ -39,18 +42,35 @@
 │ - generate()      │  │ - search()    │  │ - load_persona()    │
 │ - embed()         │  │ - add_        │  │ - build_system_     │
 │ - is_healthy()    │  │   knowledge() │  │   prompt()          │
-│ - set_model() ★  │  │ - init_from_  │  │ - guess_state()     │
-│ - get_model() ★  │  │   files()     │  │ - select_few_shot() │
+│ - set_model()     │  │ - init_from_  │  │ - guess_state()     │
+│ - get_model()     │  │   files()     │  │ - select_few_shot() │
 │                   │  │ - extract_    │  │                     │
 │                   │  │   perspective │  │                     │
-│                   │  │   () ★2A     │  │                     │
 └───────────────────┘  └───────────────┘  └─────────────────────┘
           │                    │
-          ▼                    ▼
-┌───────────────────┐  ┌───────────────┐
-│     Ollama        │  │   ChromaDB    │
-│   (External)      │  │  (External)   │
-└───────────────────┘  └───────────────┘
+          │     ┌──────────────┘
+          ▼     ▼
+┌───────────────────┐  ┌───────────────┐  ┌─────────────────────┐
+│     Ollama        │  │   ChromaDB    │  │  Quality Control ★5│
+│   (External)      │  │  (External)   │  │                     │
+└───────────────────┘  └───────────────┘  │ ┌─────────────────┐ │
+                                          │ │    Director     │ │
+                                          │ │ (director.py)   │ │
+                                          │ │ - evaluate_     │ │
+                                          │ │   response()    │ │
+                                          │ │ - _check_*()    │ │
+                                          │ │ - _score_with_  │ │
+                                          │ │   llm()         │ │
+                                          │ └─────────────────┘ │
+                                          │ ┌─────────────────┐ │
+                                          │ │  NoveltyGuard   │ │
+                                          │ │(novelty_guard.py│ │
+                                          │ │ - check_and_    │ │
+                                          │ │   update()      │ │
+                                          │ │ - _select_      │ │
+                                          │ │   strategy()    │ │
+                                          │ └─────────────────┘ │
+                                          └─────────────────────┘
 ```
 
 ---
@@ -72,7 +92,27 @@ core/character.py
 core/duo_dialogue.py
 ├── dataclasses
 ├── enum
+├── core.director.Director
+├── core.novelty_guard.NoveltyGuard
+├── core.types (DirectorStatus)
 └── (uses Character via injection)
+
+core/director.py
+├── yaml
+├── re
+├── core.types (DirectorStatus, DirectorEvaluation)
+└── (uses OllamaClient via injection for LLM scoring)
+
+core/novelty_guard.py
+├── enum
+├── dataclasses
+├── yaml
+├── re
+└── core.types (LoopCheckResult)
+
+core/types.py
+├── dataclasses
+└── enum
 
 core/prompt_builder.py
 ├── dataclasses
@@ -101,11 +141,14 @@ core/conversation_logger.py
 |--------|-------|----------------|
 | chat.py | 419 | CLI entry point, command handling, /model command |
 | character.py | 175 | Character response generation |
-| duo_dialogue.py | 330 | AI-to-AI dialogue orchestration |
+| duo_dialogue.py | 462 | AI-to-AI dialogue orchestration, quality control integration |
 | prompt_builder.py | 261 | System prompt construction |
 | rag_engine.py | 299 | Vector search & knowledge management |
 | ollama_client.py | 155 | LLM API interaction, model switching |
 | conversation_logger.py | 156 | Conversation persistence |
+| **types.py** | 41 | Shared type definitions (DirectorStatus, etc.) |
+| **director.py** | 605 | Quality evaluation, static checks, LLM scoring |
+| **novelty_guard.py** | 272 | Loop detection, escape strategy injection |
 
 ---
 
@@ -175,16 +218,18 @@ User Input
 
 ```
 tests/
-├── test_ollama_client.py        → core/ollama_client.py (87%)
-├── test_rag_engine.py           → core/rag_engine.py (94%)
-├── test_character.py            → core/character.py (88%)
-├── test_prompt_builder.py       → core/prompt_builder.py (91%)
-├── test_duo_dialogue.py         → core/duo_dialogue.py (99%)
-├── test_conversation_logger.py  → core/conversation_logger.py (98%)
-├── test_knowledge_perspectives  → knowledge/*.txt (Phase 2B)
-├── test_integration.py          → Full system (integration)
-├── test_performance.py          → Performance benchmarks
-└── test_e2e_cli.py              → chat.py (E2E)
+├── test_ollama_client.py        → core/ollama_client.py (13 tests)
+├── test_rag_engine.py           → core/rag_engine.py (14 tests)
+├── test_character.py            → core/character.py (12 tests)
+├── test_prompt_builder.py       → core/prompt_builder.py (4 tests)
+├── test_duo_dialogue.py         → core/duo_dialogue.py (34 tests)
+├── test_conversation_logger.py  → core/conversation_logger.py (16 tests)
+├── test_knowledge_perspectives  → knowledge/*.txt (11 tests)
+├── test_director.py             → core/director.py (53 tests) ★Phase 1-4
+├── test_novelty_guard.py        → core/novelty_guard.py (27 tests) ★Phase 2
+├── test_integration.py          → Full system integration (5 tests)
+├── test_performance.py          → Performance benchmarks (5 tests)
+└── test_e2e_cli.py              → chat.py E2E (12 tests)
 ```
 
-**Overall Coverage**: 94% (125 tests)
+**Overall Coverage**: 91% (206 tests)

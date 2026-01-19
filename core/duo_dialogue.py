@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
+
+from core.director import Director
+from core.novelty_guard import NoveltyGuard
+from core.types import DirectorStatus
 
 if TYPE_CHECKING:
     from core.character import Character
@@ -111,6 +116,12 @@ class DuoDialogueManager:
     convergence_keywords: List[str] = field(default_factory=list, init=False)
     max_history_verbatim: int = field(default=4, init=False)
 
+    # Quality control (Phase 5)
+    director: Optional[Director] = field(default=None, init=False)
+    novelty_guard: Optional[NoveltyGuard] = field(default=None, init=False)
+    max_retries: int = field(default=3, init=False)
+    _logger: logging.Logger = field(default_factory=lambda: logging.getLogger(__name__), init=False)
+
     def __post_init__(self) -> None:
         """Initialize configuration values."""
         self.max_turns = self.config.get("max_turns", 10)
@@ -123,6 +134,27 @@ class DuoDialogueManager:
         self.max_history_verbatim = self.config.get("max_history_verbatim", 4)
         self.dialogue_history = []
 
+        # Initialize quality control components
+        self.max_retries = self.config.get("max_retries", 3)
+
+        # Director initialization
+        director_config = self.config.get("director", {})
+        if director_config.get("enabled", False):
+            self.director = Director(
+                rules_path=director_config.get("rules_path", "director/director_rules.yaml"),
+                enable_static_checks=director_config.get("enable_static_checks", True),
+                enable_llm_scoring=director_config.get("enable_llm_scoring", False),
+            )
+
+        # NoveltyGuard initialization
+        novelty_config = self.config.get("novelty_guard", {})
+        if novelty_config.get("enabled", False):
+            self.novelty_guard = NoveltyGuard(
+                window_size=novelty_config.get("window_size", 3),
+                max_topic_depth=novelty_config.get("max_topic_depth", 3),
+                rules_path=novelty_config.get("rules_path", "director/director_rules.yaml"),
+            )
+
     def start_dialogue(self, topic: str) -> None:
         """Start a new dialogue with the given topic.
 
@@ -133,6 +165,10 @@ class DuoDialogueManager:
         self.state = DialogueState.DIALOGUE
         self.dialogue_history = []
         self.turn_count = 0
+
+        # Reset NoveltyGuard for new dialogue
+        if self.novelty_guard:
+            self.novelty_guard.reset()
 
     def next_turn(self) -> Tuple[str, str]:
         """Execute the next turn in the dialogue.
@@ -152,6 +188,102 @@ class DuoDialogueManager:
         self.turn_count += 1
 
         return speaker.name, response
+
+    def next_turn_with_quality_check(self) -> Tuple[str, str, Dict[str, Any]]:
+        """Execute the next turn with Director quality check and retry.
+
+        Uses NoveltyGuard to detect loops and inject escape strategies,
+        and Director to evaluate response quality with retry on failure.
+
+        Returns:
+            Tuple of (speaker_name, response, quality_info).
+            quality_info contains: status, attempts, checks, novelty_check
+        """
+        speaker = self._get_current_speaker()
+        speaker_id = "yana" if speaker.name == "やな" else "ayu"
+
+        quality_info: Dict[str, Any] = {
+            "status": "PASS",
+            "attempts": 0,
+            "checks": {},
+            "novelty_check": None,
+        }
+
+        # Check for loops with NoveltyGuard (preview mode)
+        loop_injection = ""
+        if self.novelty_guard and self.dialogue_history:
+            last_response = self.dialogue_history[-1].get("content", "")
+            novelty_result = self.novelty_guard.check_and_update(last_response, update=False)
+            quality_info["novelty_check"] = {
+                "loop_detected": novelty_result.loop_detected,
+                "strategy": novelty_result.strategy,
+                "stuck_nouns": novelty_result.stuck_nouns,
+            }
+            if novelty_result.loop_detected:
+                loop_injection = f"\n\n{novelty_result.injection}"
+
+        # Build base context
+        base_context = self._build_context_for_speaker(speaker)
+
+        # Retry loop
+        response = ""
+        for attempt in range(self.max_retries):
+            quality_info["attempts"] = attempt + 1
+
+            # Build context with any injections
+            context = base_context + loop_injection
+
+            # Add retry feedback if not first attempt
+            if attempt > 0 and quality_info.get("suggestion"):
+                context += f"\n\n【修正指示】{quality_info['suggestion']}"
+
+            # Generate response
+            response = speaker.respond(context)
+
+            # Evaluate with Director if enabled
+            if self.director:
+                history = [
+                    {"role": h["speaker"], "content": h["content"]}
+                    for h in self.dialogue_history
+                ]
+                evaluation = self.director.evaluate_response(
+                    speaker=speaker_id,
+                    response=response,
+                    history=history,
+                    turn=self.turn_count,
+                )
+
+                quality_info["checks"] = evaluation.checks
+                quality_info["status"] = evaluation.status.value
+                quality_info["suggestion"] = evaluation.suggestion
+
+                if evaluation.status == DirectorStatus.PASS:
+                    break
+                elif evaluation.status == DirectorStatus.WARN:
+                    # Accept with warning
+                    self._logger.info(f"応答品質警告: {evaluation.suggestion}")
+                    break
+                else:  # RETRY
+                    self._logger.info(
+                        f"リトライ {attempt + 1}/{self.max_retries}: {evaluation.suggestion}"
+                    )
+                    continue
+            else:
+                # No director, accept as-is
+                break
+
+        # Update state
+        self.dialogue_history.append({
+            "speaker": speaker.name,
+            "content": response,
+        })
+        self.turn_count += 1
+
+        # Update NoveltyGuard with final response
+        if self.novelty_guard:
+            self.novelty_guard.check_and_update(response, update=True)
+
+        return speaker.name, response, quality_info
 
     def should_continue(self) -> bool:
         """Check if the dialogue should continue.

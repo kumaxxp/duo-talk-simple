@@ -4,6 +4,71 @@ intervention_policy:
   max_tokens: 120
   style: "short, one-goal"
 
+# === Director設定 ===
+director_config:
+  enabled: true
+  max_retries: 3
+  enable_static_checks: true
+  enable_llm_scoring: true
+
+# === ハードルール（静的チェック） ===
+hard_rules:
+  # 出力形式
+  format:
+    max_lines: 8       # 8行以上でRETRY
+    warn_lines: 6      # 6-7行でWARN
+    max_sentences: 4   # 4文以上でRETRY
+    max_topics: 3      # 3話題以上でRETRY
+
+  # 口調マーカー判定
+  tone_markers:
+    yana:
+      endings: ["わ！", "へ？", "よね", "かな", "かも", "だね", "じゃん"]
+      vocab: ["やだ", "ほんと", "えー", "うーん", "すっごい", "そっか", "ね。"]
+      style_check: "2文以下かつ感嘆符を含む"
+    ayu:
+      endings: ["でしょう", "ですね", "ました", "ません", "ですよ", "です。"]
+      vocab: ["つまり", "要するに", "一般的に", "目安", "推奨"]
+      style_check: "丁寧語が2回以上出現"
+
+# === LLMスコアリング（5軸評価） ===
+scoring:
+  enabled: true
+  retry_threshold: 3.5   # 平均3.5未満でRETRY
+  warn_threshold: 4.0    # 平均4.0未満でWARN
+  axes:
+    - name: frame_consistency
+      description: "その場の状況に合った内容か"
+    - name: roleplay
+      description: "姉妹の関係性・性格が守られているか"
+    - name: connection
+      description: "直前の相手の発言を無視していないか"
+    - name: information_density
+      description: "内容が薄すぎない/詰め込みすぎていないか"
+    - name: naturalness
+      description: "機械的な繰り返しや唐突な表現がないか"
+
+# === ループ脱出戦略（NoveltyGuard連携） ===
+loop_break_strategies:
+  - id: specific_slot
+    description: "具体的な数値・場所・エピソードを要求"
+    injection: "【必須】以下のいずれかを1つ以上含めること：具体的な数値、具体的な場所、過去の具体的なエピソード"
+  - id: conflict_within
+    description: "同トピック内で姉妹の意見対立"
+    injection: "【推奨】姉妹の意見を対立させて、同じ話題を違う角度から掘り下げる"
+  - id: action_next
+    description: "次の行動を決める"
+    injection: "【推奨】次に何をするか、具体的な行動を決めてください"
+  - id: past_reference
+    description: "過去のエピソードを参照"
+    injection: "【推奨】「前にもあった」「あの時は」など、過去の具体的なエピソードを参照してください"
+  - id: force_why
+    description: "なぜ？を掘り下げる"
+    injection: "【推奨】「なぜそうなるのか」を掘り下げてください"
+  - id: change_topic
+    description: "最終手段：話題変更"
+    injection: "【必須】この話題は十分議論されました。関連する別の話題に移ってください"
+
 triggers:
   - id: derailment
     when:
@@ -46,6 +111,13 @@ triggers:
         - "criticism_ratio >= 0.8"
     action: "inject_harmony"
 
+  # === NoveltyGuard連携 ===
+  - id: loop_detected
+    when:
+      all:
+        - "novelty_guard.loop_detected == true"
+    action: "apply_loop_break_strategy"
+
 actions:
   summarize_and_refocus:
     template: "ここまでを20語以内で要約し、次に決める1点を提示する。"
@@ -61,3 +133,7 @@ actions:
     template: "対立が長引いています。どちらかが折れるか、折衷案を出してください。"
   inject_harmony:
     template: "会話のトーンが否定的に偏っています。建設的な発言を入れてください。"
+
+  # === NoveltyGuard連携 ===
+  apply_loop_break_strategy:
+    template: "NoveltyGuardが選択した戦略に応じたインジェクションを適用する。"
