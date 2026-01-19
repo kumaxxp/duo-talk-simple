@@ -304,6 +304,7 @@ def main():
                 elif command == "/help":
                     print("コマンド一覧:")
                     print("  /switch - キャラクター切り替え")
+                    print("  /model  - モデル切り替え（gemma/swallow/cydonia）")
                     print("  /clear  - 会話履歴クリア")
                     print("  /status - 状態表示")
                     print("  /duo <お題> - AI姉妹対話モード")
@@ -311,6 +312,34 @@ def main():
                     print("  /exit   - 終了")
                     if conv_logger:
                         print(f"\n会話ログ: {conv_logger.current_log_path}")
+                    continue
+
+                elif user_input.lower().startswith("/model"):
+                    parts = user_input.split(maxsplit=1)
+                    model_presets = config.get("model_presets", {})
+
+                    if len(parts) == 1:
+                        # モデル一覧表示
+                        current_model = system["client"].get_model()
+                        print(f"\n現在のモデル: {current_model}")
+                        print("\n利用可能なプリセット:")
+                        for key, preset in model_presets.items():
+                            marker = " [使用中]" if preset["name"] == current_model else ""
+                            print(f"  {key}: {preset['description']} ({preset['vram_usage_gb']}GB){marker}")
+                        print("\n使い方: /model <プリセット名>")
+                        print("例: /model swallow")
+                    else:
+                        preset_key = parts[1].strip().lower()
+                        if preset_key in model_presets:
+                            new_model = model_presets[preset_key]["name"]
+                            system["client"].set_model(new_model)
+                            print(f"モデルを切り替えました: {preset_key}")
+                            print(f"  {model_presets[preset_key]['description']}")
+                            if conv_logger:
+                                conv_logger.log_command("/model", preset_key)
+                        else:
+                            print(f"不明なプリセット: {preset_key}")
+                            print(f"利用可能: {', '.join(model_presets.keys())}")
                     continue
 
                 elif user_input.lower().startswith("/duo "):

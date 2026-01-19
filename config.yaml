@@ -4,10 +4,28 @@
 # ===== Ollama設定 =====
 ollama:
   base_url: "http://localhost:11434/v1"
-  llm_model: "gemma3:12b"           # テキスト生成用
+  llm_model: "gemma3:12b"           # テキスト生成用（デフォルト）
   embed_model: "mxbai-embed-large"  # 埋め込み生成用
   timeout: 30.0                      # タイムアウト（秒）
   max_retries: 3                     # 最大リトライ回数
+
+# ===== モデルプリセット =====
+# /model コマンドで切り替え可能
+model_presets:
+  gemma:
+    name: "gemma3:12b"
+    description: "Gemma 3 12B - バランス型、高品質な日本語対応"
+    vram_usage_gb: 8.1
+
+  swallow:
+    name: "hf.co/mmnga/tokyotech-llm-Llama-3.1-Swallow-8B-Instruct-v0.3-gguf:Q4_K_M"
+    description: "Swallow 8B - 日本語特化、東工大開発"
+    vram_usage_gb: 4.9
+
+  cydonia:
+    name: "hello_user/cydonia:22b-v1.3-q4_K_M"
+    description: "Cydonia 22B - 創造的ロールプレイ向け"
+    vram_usage_gb: 13.0
 
 # ===== RAG設定 =====
 rag:
@@ -155,6 +173,7 @@ ui:
 
     コマンド:
       /switch  - キャラクター切り替え
+      /model   - モデル切り替え（gemma/swallow/cydonia）
       /duo <お題> - AI姉妹対話モード
       /clear   - 会話履歴クリア
       /help    - コマンド一覧

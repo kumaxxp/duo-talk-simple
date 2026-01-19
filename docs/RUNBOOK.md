@@ -12,10 +12,20 @@ duo-talk-simple is a CLI application for AI character conversations.
 | Component | Technology | Purpose |
 |-----------|------------|---------|
 | CLI | Python | User interface |
-| LLM | Ollama (gemma3:12b) | Text generation |
+| LLM | Ollama (gemma3:12b default) | Text generation |
 | Embeddings | Ollama (mxbai-embed-large) | Vector search |
 | Vector DB | ChromaDB | RAG storage |
 | Logging | Python logging | System logs |
+
+### Available Models
+
+| Preset | Model | VRAM | Use Case |
+|--------|-------|------|----------|
+| gemma | gemma3:12b | 8.1GB | Default, balanced |
+| swallow | Swallow 8B | 4.9GB | Japanese-focused |
+| cydonia | Cydonia 22B | 13.0GB | Creative roleplay |
+
+Switch models with `/model <preset>` command.
 
 ---
 
@@ -149,11 +159,17 @@ Error: model 'gemma3:12b' not found
 
 **Fix:**
 ```bash
-# Pull the model
+# Pull the default model
 ollama pull gemma3:12b
+
+# Or pull alternative models
+ollama pull hf.co/mmnga/tokyotech-llm-Llama-3.1-Swallow-8B-Instruct-v0.3-gguf:Q4_K_M
 
 # Verify
 ollama list
+
+# Switch model in CLI
+/model swallow
 ```
 
 ---
@@ -368,6 +384,7 @@ python chat.py
 
 | Date | Change | Author |
 |------|--------|--------|
+| 2026-01-19 | Added model switching documentation | - |
 | 2026-01-19 | Initial runbook created | - |
 
 ---

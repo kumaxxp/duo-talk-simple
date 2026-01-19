@@ -1,7 +1,7 @@
 # Core Module Codemap
 
-**Generated**: 2026-01-19 16:00
-**Freshness**: Current (Phase 2A updated)
+**Generated**: 2026-01-19 18:00
+**Freshness**: Current (Model switching added)
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Module | Classes | Functions | Lines |
 |--------|---------|-----------|-------|
-| ollama_client.py | 1 | 0 | 141 |
+| ollama_client.py | 1 | 0 | 155 |
 | rag_engine.py | 1 | 0 | 299 |
 | character.py | 1 | 0 | 175 |
 | prompt_builder.py | 1 | 5 | 256 |
@@ -45,6 +45,12 @@ class OllamaClient:
 
     def embed(text: str) -> List[float]
         # Generate embedding vector
+
+    def set_model(model: str) -> None  # ★ Model switching
+        # Dynamically change model
+
+    def get_model() -> str  # ★ Model switching
+        # Get current model name
 ```
 
 **Dependencies**: openai, ollama, logging

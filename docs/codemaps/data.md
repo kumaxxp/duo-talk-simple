@@ -1,7 +1,7 @@
 # Data Models Codemap
 
-**Generated**: 2026-01-19 16:00
-**Freshness**: Current (Phase 2A updated)
+**Generated**: 2026-01-19 18:00
+**Freshness**: Current (Model switching added)
 
 ---
 
@@ -18,6 +18,13 @@ ollama:
   embed_model: str       # "mxbai-embed-large"
   timeout: float         # 30.0
   max_retries: int       # 3
+
+# ★ Model Presets (runtime switching via /model command)
+model_presets:
+  <preset_key>:          # "gemma" | "swallow" | "cydonia"
+    name: str            # Ollama model identifier
+    description: str     # Human-readable description
+    vram_usage_gb: float # VRAM requirement
 
 rag:
   chroma_db_path: str    # "./data/chroma_db"

@@ -139,3 +139,17 @@ class OllamaClient:
             return True
         except Exception:
             return False
+
+    def set_model(self, model: str) -> None:
+        """
+        モデルを動的に切り替え
+
+        Args:
+            model: 新しいモデル名
+        """
+        self.model = model
+        self.logger.info(f"モデルを変更: {model}")
+
+    def get_model(self) -> str:
+        """現在のモデル名を取得"""
+        return self.model

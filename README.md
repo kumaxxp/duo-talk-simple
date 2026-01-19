@@ -18,8 +18,13 @@ TDD方式で実装した、姉妹AIによるJetRacer対話システム
 ### Ollamaモデル
 
 ```bash
-ollama pull gemma3:12b        # LLM
+# 必須モデル
+ollama pull gemma3:12b        # デフォルトLLM
 ollama pull mxbai-embed-large # 埋め込み
+
+# オプション（モデル比較用）
+ollama pull hf.co/mmnga/tokyotech-llm-Llama-3.1-Swallow-8B-Instruct-v0.3-gguf:Q4_K_M  # Swallow
+# Cydonia は別途インストール
 ```
 
 ## セットアップ
@@ -49,12 +54,21 @@ python chat.py
 | コマンド | 説明 |
 |----------|------|
 | `/switch` | キャラクター切り替え |
+| `/model` | モデル切り替え（gemma/swallow/cydonia） |
 | `/duo <お題>` | AI姉妹対話モード |
 | `/clear` | 会話履歴クリア |
 | `/status` | 状態表示 |
 | `/debug` | RAGデバッグ表示切替 |
 | `/help` | ヘルプ表示 |
 | `/exit` | 終了（ログ保存） |
+
+### モデルプリセット
+
+| プリセット | モデル | VRAM | 特徴 |
+|-----------|--------|------|------|
+| `gemma` | gemma3:12b | 8.1GB | バランス型（デフォルト） |
+| `swallow` | Swallow 8B | 4.9GB | 日本語特化、東工大開発 |
+| `cydonia` | Cydonia 22B | 13.0GB | 創造的ロールプレイ向け |
 
 ### AI姉妹対話モード
 
@@ -130,18 +144,18 @@ pytest tests/test_e2e_cli.py -v
 
 | カテゴリ | テスト数 | 状態 |
 |----------|----------|------|
-| OllamaClient | 7 | PASS |
-| RAGEngine | 8 | PASS |
-| Character | 9 | PASS |
+| OllamaClient | 13 | PASS |
+| RAGEngine | 14 | PASS |
+| Character | 11 | PASS |
 | PromptBuilder | 4 | PASS |
-| DuoDialogue | 13 | PASS |
-| ConversationLogger | 9 | PASS |
+| DuoDialogue | 35 | PASS |
+| ConversationLogger | 12 | PASS |
 | Integration | 5 | PASS |
 | Performance | 5 | PASS |
 | E2E CLI | 12 | PASS |
-| **合計** | **85** | **ALL PASS** |
+| **合計** | **114** | **ALL PASS** |
 
-カバレッジ: **93%**
+カバレッジ: **94%**
 
 ## 設定
 
@@ -150,6 +164,7 @@ pytest tests/test_e2e_cli.py -v
 | セクション | 説明 |
 |------------|------|
 | `ollama` | LLMモデル、タイムアウト設定 |
+| `model_presets` | モデルプリセット（/modelで切り替え） |
 | `rag` | ChromaDB、検索設定 |
 | `knowledge` | 知識ベースファイル |
 | `characters` | キャラクター別設定 |

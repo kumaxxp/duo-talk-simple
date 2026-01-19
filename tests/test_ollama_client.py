@@ -90,3 +90,53 @@ class TestOllamaClient:
         # タイムアウトが適用されていることを確認（5秒以内に終了）
         # 接続オーバーヘッドを考慮
         assert elapsed < 5.0
+
+
+class TestOllamaClientModelSwitching:
+    """モデル切り替え機能テスト"""
+
+    def test_get_model_returns_current_model(self):
+        """TC-O-008: get_modelが現在のモデル名を返す"""
+        client = OllamaClient(model="gemma3:12b")
+        assert client.get_model() == "gemma3:12b"
+
+    def test_get_model_returns_custom_model(self):
+        """TC-O-009: カスタムモデルでの初期化後にget_modelが正しく返す"""
+        client = OllamaClient(model="custom-model:latest")
+        assert client.get_model() == "custom-model:latest"
+
+    def test_set_model_changes_model(self):
+        """TC-O-010: set_modelでモデルが切り替わる"""
+        client = OllamaClient(model="gemma3:12b")
+        assert client.get_model() == "gemma3:12b"
+
+        client.set_model("gemma3:4b")
+        assert client.get_model() == "gemma3:4b"
+
+    def test_set_model_multiple_times(self):
+        """TC-O-011: set_modelを複数回呼び出せる"""
+        client = OllamaClient(model="model-a")
+
+        client.set_model("model-b")
+        assert client.get_model() == "model-b"
+
+        client.set_model("model-c")
+        assert client.get_model() == "model-c"
+
+        client.set_model("model-a")
+        assert client.get_model() == "model-a"
+
+    def test_set_model_with_hf_model_name(self):
+        """TC-O-012: HuggingFace形式のモデル名を設定できる"""
+        client = OllamaClient()
+        hf_model = "hf.co/mmnga/tokyotech-llm-Llama-3.1-Swallow-8B-Instruct-v0.3-gguf:Q4_K_M"
+        client.set_model(hf_model)
+        assert client.get_model() == hf_model
+
+    def test_set_model_affects_internal_state(self):
+        """TC-O-013: set_model後に内部のmodel属性が変更される"""
+        client = OllamaClient(model="old-model")
+        client.set_model("new-model")
+
+        # 直接属性を確認
+        assert client.model == "new-model"

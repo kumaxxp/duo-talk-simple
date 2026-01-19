@@ -1,7 +1,7 @@
 # Architecture Codemap
 
-**Generated**: 2026-01-19 16:00
-**Freshness**: Current (Phase 2A updated)
+**Generated**: 2026-01-19 18:00
+**Freshness**: Current (Model switching added)
 
 ---
 
@@ -39,8 +39,8 @@
 │ - generate()      │  │ - search()    │  │ - load_persona()    │
 │ - embed()         │  │ - add_        │  │ - build_system_     │
 │ - is_healthy()    │  │   knowledge() │  │   prompt()          │
-│                   │  │ - init_from_  │  │ - guess_state()     │
-│                   │  │   files()     │  │ - select_few_shot() │
+│ - set_model() ★  │  │ - init_from_  │  │ - guess_state()     │
+│ - get_model() ★  │  │   files()     │  │ - select_few_shot() │
 │                   │  │ - extract_    │  │                     │
 │                   │  │   perspective │  │                     │
 │                   │  │   () ★2A     │  │                     │
@@ -99,12 +99,12 @@ core/conversation_logger.py
 
 | Module | Lines | Responsibility |
 |--------|-------|----------------|
-| chat.py | 391 | CLI entry point, command handling |
+| chat.py | 419 | CLI entry point, command handling, /model command |
 | character.py | 173 | Character response generation |
 | duo_dialogue.py | 186 | AI-to-AI dialogue orchestration |
 | prompt_builder.py | 256 | System prompt construction |
-| rag_engine.py | 231 | Vector search & knowledge management |
-| ollama_client.py | 141 | LLM API interaction |
+| rag_engine.py | 299 | Vector search & knowledge management |
+| ollama_client.py | 155 | LLM API interaction, model switching |
 | conversation_logger.py | 157 | Conversation persistence |
 
 ---
@@ -175,7 +175,7 @@ User Input
 
 ```
 tests/
-├── test_ollama_client.py    → core/ollama_client.py (85%)
+├── test_ollama_client.py    → core/ollama_client.py (87%)
 ├── test_rag_engine.py       → core/rag_engine.py (93%)
 ├── test_character.py        → core/character.py (88%)
 ├── test_prompt_builder.py   → core/prompt_builder.py (91%)
@@ -186,4 +186,4 @@ tests/
 └── test_e2e_cli.py          → chat.py (E2E)
 ```
 
-**Overall Coverage**: 93%
+**Overall Coverage**: 94%

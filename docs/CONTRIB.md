@@ -139,7 +139,7 @@ pytest tests/test_character.py::TestCharacter::test_init -v
 ### Coverage Target
 
 - **Minimum**: 80%
-- **Current**: 94%
+- **Current**: 94% (114 tests)
 
 ```bash
 # View coverage report
@@ -190,6 +190,20 @@ vulture chat.py core/ --min-confidence 80
 ollama:           # LLM settings
   llm_model: "gemma3:12b"
   embed_model: "mxbai-embed-large"
+
+model_presets:    # Model switching (/model command)
+  gemma:
+    name: "gemma3:12b"
+    description: "Gemma 3 12B"
+    vram_usage_gb: 8.1
+  swallow:
+    name: "hf.co/mmnga/..."
+    description: "Swallow 8B - 日本語特化"
+    vram_usage_gb: 4.9
+  cydonia:
+    name: "hello_user/cydonia:22b..."
+    description: "Cydonia 22B - ロールプレイ向け"
+    vram_usage_gb: 13.0
 
 rag:              # RAG settings
   top_k: 3
