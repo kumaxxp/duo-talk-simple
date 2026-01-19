@@ -85,7 +85,9 @@ class Character:
         context = ""
         self.last_rag_results = []
         if use_rag:
-            rag_results = self.rag.search(query=search_query, top_k=3)
+            rag_results = self.rag.search(
+                query=search_query, top_k=3, character=self.name
+            )
             self.last_rag_results = rag_results
             if rag_results:
                 context = "\n\n".join(r["text"] for r in rag_results)

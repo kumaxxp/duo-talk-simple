@@ -11,7 +11,7 @@ Ollama + ChromaDB (RAG) で構築されたCLIアプリケーション。
 | LLM | Ollama (gemma3:12b) |
 | 埋め込み | mxbai-embed-large |
 | ベクトルDB | ChromaDB |
-| テスト | pytest (94% coverage, 101 tests) |
+| テスト | pytest (94% coverage, 108 tests) |
 
 ---
 
@@ -48,11 +48,26 @@ User Input
 | コンポーネント | ファイル | 責務 |
 |---------------|---------|------|
 | OllamaClient | `core/ollama_client.py` | LLMバックエンド通信、テキスト生成、埋め込み生成 |
-| RAGEngine | `core/rag_engine.py` | ChromaDBによる知識検索、ベクトル類似度検索 |
+| RAGEngine | `core/rag_engine.py` | ChromaDBによる知識検索、ベクトル類似度検索、**視点抽出** |
 | Character | `core/character.py` | キャラクター応答生成、履歴管理、状態推定 |
 | PromptBuilder | `core/prompt_builder.py` | システムプロンプト構築、Persona読込、Few-shot選択 |
 | DuoDialogueManager | `core/duo_dialogue.py` | AI同士対話の制御、ターン管理、収束検知 |
 | ConversationLogger | `core/conversation_logger.py` | 会話ログの永続化 |
+
+### 視点抽出機能（Phase 2A）
+
+RAGエンジンが知識を返す際、キャラクターの視点に応じて抽出:
+
+```
+【客観】
+- センサーは周囲の障害物を検出する
+
+【やなの視点】
+- まず動かしてみて感覚を掴む ← やなが検索時に取得
+
+【あゆの視点】
+- 統計分析が重要 ← あゆが検索時に取得
+```
 
 ---
 
@@ -183,8 +198,8 @@ pytest tests/ -v
 ```
 tests/
 ├── test_ollama_client.py      # OllamaClient単体テスト (7)
-├── test_rag_engine.py         # RAGEngine単体テスト (8)
-├── test_character.py          # Character単体テスト (10)
+├── test_rag_engine.py         # RAGEngine単体テスト (14)  ★Phase 2A拡充
+├── test_character.py          # Character単体テスト (11)  ★Phase 2A拡充
 ├── test_prompt_builder.py     # PromptBuilder単体テスト (4)
 ├── test_duo_dialogue.py       # DuoDialogue単体テスト (34)  ★Phase 1拡充
 ├── test_conversation_logger.py # Logger単体テスト (16)
@@ -193,7 +208,7 @@ tests/
 └── test_e2e_cli.py            # CLI E2Eテスト (12) [pexpect]
 ```
 
-**合計**: 101テスト
+**合計**: 108テスト
 
 ---
 

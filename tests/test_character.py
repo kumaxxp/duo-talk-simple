@@ -135,3 +135,100 @@ class TestCharacter:
         # few_shot_patternsがロードされている（パスが指定されていれば）
         assert hasattr(test_character, "few_shot_patterns")
         assert isinstance(test_character.few_shot_patterns, list)
+
+
+class TestPerspectiveRAG:
+    """視点抽出RAG統合テスト（Phase 2A-2）"""
+
+    @pytest.fixture
+    def character_with_perspective_knowledge(self):
+        """視点付き知識を持つキャラクター"""
+        test_path = tempfile.mkdtemp(prefix="test_perspective_")
+
+        client = OllamaClient()
+        rag = RAGEngine(client, chroma_path=test_path)
+
+        # 視点付き知識を追加
+        perspective_text = """【客観】
+- センサーは周囲の障害物を検出する
+- 超音波センサーの測定範囲は2cm-400cm
+
+【やなの視点】
+- センサーの数値より、まず実際に走ってみて感覚を掴むのが大事
+- 細かい調整は後からでいい
+
+【あゆの視点】
+- センサー値の統計分析が重要
+- 信頼区間を考慮した判断が必要"""
+
+        rag.add_knowledge(
+            [perspective_text],
+            [{"domain": "technical", "character": "both"}],
+        )
+
+        char = Character("yana", "./personas/yana.yaml", client, rag)
+
+        yield char
+
+        try:
+            shutil.rmtree(test_path)
+        except Exception:
+            pass
+
+    def test_rag_search_uses_character_perspective(
+        self, character_with_perspective_knowledge
+    ):
+        """TC-C-010: RAG検索でキャラクターの視点が抽出される"""
+        char = character_with_perspective_knowledge
+
+        # RAG検索を実行（内部でcharacter=self.nameを渡すはず）
+        char.respond("センサーについて教えて", use_rag=True)
+
+        # last_rag_resultsを確認
+        assert len(char.last_rag_results) > 0
+
+        # 結果にやなの視点が含まれ、あゆの視点は含まれないことを確認
+        result_text = char.last_rag_results[0]["text"]
+        assert "まず実際に走ってみて" in result_text or "感覚を掴む" in result_text
+        assert "統計分析" not in result_text
+        assert "信頼区間" not in result_text
+
+    def test_ayu_character_gets_ayu_perspective(self):
+        """TC-C-011: あゆキャラクターはあゆの視点を取得"""
+        test_path = tempfile.mkdtemp(prefix="test_ayu_perspective_")
+
+        client = OllamaClient()
+        rag = RAGEngine(client, chroma_path=test_path)
+
+        # 視点付き知識
+        perspective_text = """【客観】
+- バッテリー電圧は7.0V以上を維持する
+
+【やなの視点】
+- 動かなくなったら充電すればいい
+
+【あゆの視点】
+- 電圧監視を常時行い、閾値を設定すべき
+- 予防的なメンテナンスが重要"""
+
+        rag.add_knowledge(
+            [perspective_text],
+            [{"domain": "technical", "character": "both"}],
+        )
+
+        ayu_char = Character("ayu", "./personas/ayu.yaml", client, rag)
+
+        ayu_char.respond("バッテリーについて", use_rag=True)
+
+        assert len(ayu_char.last_rag_results) > 0
+        result_text = ayu_char.last_rag_results[0]["text"]
+
+        # あゆの視点が含まれる
+        assert "電圧監視" in result_text or "予防的" in result_text
+        # やなの視点は含まれない
+        assert "動かなくなったら充電" not in result_text
+
+        try:
+            shutil.rmtree(test_path)
+        except Exception:
+            pass

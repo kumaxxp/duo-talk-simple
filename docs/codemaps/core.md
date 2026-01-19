@@ -1,7 +1,7 @@
 # Core Module Codemap
 
-**Generated**: 2026-01-19 12:30
-**Freshness**: Current
+**Generated**: 2026-01-19 16:00
+**Freshness**: Current (Phase 2A updated)
 
 ---
 
@@ -10,11 +10,11 @@
 | Module | Classes | Functions | Lines |
 |--------|---------|-----------|-------|
 | ollama_client.py | 1 | 0 | 141 |
-| rag_engine.py | 1 | 0 | 231 |
-| character.py | 1 | 0 | 173 |
+| rag_engine.py | 1 | 0 | 299 |
+| character.py | 1 | 0 | 175 |
 | prompt_builder.py | 1 | 5 | 256 |
-| duo_dialogue.py | 2 | 0 | 186 |
-| conversation_logger.py | 1 | 0 | 157 |
+| duo_dialogue.py | 2 | 0 | 330 |
+| conversation_logger.py | 1 | 0 | 156 |
 
 ---
 
@@ -56,6 +56,7 @@ class OllamaClient:
 ### Class: RAGEngine
 
 Vector search engine using ChromaDB for knowledge retrieval.
+**Phase 2A**: Added perspective extraction for character-specific knowledge.
 
 ```python
 class RAGEngine:
@@ -74,9 +75,19 @@ class RAGEngine:
     def search(
         query: str,
         top_k: int = 3,
-        filter_metadata: Dict = None
+        filters: Optional[Dict] = None,
+        character: Optional[str] = None  # ★ Phase 2A
     ) -> List[Dict]
         # Search similar documents
+        # If character specified, applies extract_perspective()
+
+    def extract_perspective(  # ★ Phase 2A
+        text: str,
+        character: str  # "yana" | "ayu"
+    ) -> str
+        # Extract character's perspective block from text
+        # Markers: 【客観】【やなの視点】【あゆの視点】
+        # Fallback: 客観 → original text
 
     def init_from_files(
         source_dir: str,
@@ -92,7 +103,7 @@ class RAGEngine:
         # Split text into chunks
 ```
 
-**Dependencies**: chromadb, OllamaClient
+**Dependencies**: chromadb, OllamaClient, re
 
 ---
 

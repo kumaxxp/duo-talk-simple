@@ -3,7 +3,6 @@
 import pytest
 import shutil
 import tempfile
-import uuid
 from core.ollama_client import OllamaClient
 from core.rag_engine import RAGEngine
 
@@ -122,3 +121,117 @@ class TestRAGEngine:
         """TC-R-008: 空のデータベースで検索"""
         results = rag_engine.search("何か", top_k=3)
         assert len(results) == 0
+
+
+class TestPerspectiveExtraction:
+    """視点抽出機能のテスト（Phase 2A-1）"""
+
+    def test_extract_perspective_yana(self, rag_engine):
+        """TC-R-009: やなの視点ブロックを正しく抽出できる"""
+        text = """## センサ統合
+【客観】
+- IMUは姿勢と角速度を計測する
+- オプティカルフローは相対移動を検出
+
+【やなの視点】
+- まず動く最小構成で走らせてズレを可視化
+- ログを残して後から詰める
+
+【あゆの視点】
+- 同期が崩れると学習も推論も破綻する
+- 先に遅延計測と校正プロセスを決める"""
+
+        result = rag_engine.extract_perspective(text, character="yana")
+
+        assert "やなの視点" not in result  # ヘッダーは除去
+        assert "まず動く最小構成" in result
+        assert "ログを残して" in result
+        assert "同期が崩れると" not in result  # あゆの視点は含まない
+
+    def test_extract_perspective_ayu(self, rag_engine):
+        """TC-R-010: あゆの視点ブロックを正しく抽出できる"""
+        text = """## 推論レイテンシ
+【客観】
+- 推論の遅延は操舵遅れに直結する
+
+【やなの視点】
+- まず軽いモデルで安定させる
+
+【あゆの視点】
+- p95遅延を常に監視すべき
+- 平均値だけを見ると事故要因を見落とす"""
+
+        result = rag_engine.extract_perspective(text, character="ayu")
+
+        assert "あゆの視点" not in result  # ヘッダーは除去
+        assert "p95遅延" in result
+        assert "平均値だけを見ると" in result
+        assert "まず軽いモデル" not in result  # やなの視点は含まない
+
+    def test_extract_perspective_fallback_to_objective(self, rag_engine):
+        """TC-R-011: 該当する視点がない場合は客観にフォールバック"""
+        text = """## 概要
+【客観】
+- JetRacerは自律走行車である
+- センサーで周囲を認識する
+
+【やなの視点】
+- とりあえず走らせてみる"""
+
+        # あゆの視点がないのでフォールバック
+        result = rag_engine.extract_perspective(text, character="ayu")
+
+        assert "JetRacerは自律走行車" in result
+        assert "センサーで周囲を認識" in result
+        assert "とりあえず走らせて" not in result
+
+    def test_extract_perspective_no_markers(self, rag_engine):
+        """TC-R-012: マーカーがない場合は元テキストをそのまま返す"""
+        text = "JetRacerは自律走行車です。センサーで周囲を認識します。"
+
+        result = rag_engine.extract_perspective(text, character="yana")
+
+        assert result == text
+
+    def test_search_with_character_parameter(self, rag_engine):
+        """TC-R-013: character指定で視点抽出された結果を返す"""
+        # 視点付きテキストを追加
+        texts = [
+            """【客観】
+- センサーは重要です
+
+【やなの視点】
+- まず動かしてみる
+
+【あゆの視点】
+- データを分析する"""
+        ]
+        metadatas = [{"domain": "technical", "character": "both"}]
+        rag_engine.add_knowledge(texts, metadatas)
+
+        # やな視点で検索
+        results = rag_engine.search("センサー", top_k=1, character="yana")
+
+        assert len(results) == 1
+        assert "まず動かしてみる" in results[0]["text"]
+        assert "データを分析する" not in results[0]["text"]
+
+    def test_search_without_character_returns_full_text(self, rag_engine):
+        """TC-R-014: character未指定で全文を返す"""
+        texts = [
+            """【客観】
+- センサーは重要です
+
+【やなの視点】
+- まず動かしてみる"""
+        ]
+        metadatas = [{"domain": "technical", "character": "both"}]
+        rag_engine.add_knowledge(texts, metadatas)
+
+        # character指定なしで検索
+        results = rag_engine.search("センサー", top_k=1)
+
+        assert len(results) == 1
+        # 全文が返される（視点抽出されない）
+        assert "客観" in results[0]["text"]
+        assert "やなの視点" in results[0]["text"]

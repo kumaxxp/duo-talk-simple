@@ -4,6 +4,7 @@ import chromadb
 from typing import List, Dict, Optional
 import logging
 import os
+import re
 import time
 
 
@@ -86,6 +87,7 @@ class RAGEngine:
         query: str,
         top_k: int = 3,
         filters: Optional[Dict[str, str]] = None,
+        character: Optional[str] = None,
     ) -> List[Dict]:
         """
         類似度検索
@@ -95,6 +97,8 @@ class RAGEngine:
             top_k: 取得件数
             filters: メタデータフィルタ
                 例: {"character": "yana"}
+            character: キャラクター指定（"yana" | "ayu"）
+                指定すると視点抽出を適用
 
         Returns:
             検索結果:
@@ -125,9 +129,13 @@ class RAGEngine:
         formatted = []
         if results["documents"] and len(results["documents"][0]) > 0:
             for i in range(len(results["documents"][0])):
+                doc_text = results["documents"][0][i]
+                # character指定があれば視点抽出
+                if character:
+                    doc_text = self.extract_perspective(doc_text, character)
                 formatted.append(
                     {
-                        "text": results["documents"][0][i],
+                        "text": doc_text,
                         "score": 1 - results["distances"][0][i],  # 距離→類似度
                         "metadata": results["metadatas"][0][i],
                     }
@@ -135,6 +143,66 @@ class RAGEngine:
 
         self.logger.debug(f"検索: '{query}' → {len(formatted)}件")
         return formatted
+
+    def extract_perspective(self, text: str, character: str) -> str:
+        """
+        テキストから指定キャラクターの視点ブロックを抽出
+
+        Args:
+            text: 視点マーカーを含むテキスト
+            character: "yana" | "ayu"
+
+        Returns:
+            抽出された視点テキスト
+            - キャラクターの視点があれば、その内容を返す
+            - なければ客観ブロックにフォールバック
+            - マーカーがなければ元テキストをそのまま返す
+        """
+        # 視点マーカーのマッピング
+        perspective_map = {
+            "yana": "やなの視点",
+            "ayu": "あゆの視点",
+        }
+
+        # マーカーパターン：【〇〇】で始まるブロック
+        marker_pattern = r"【([^】]+)】"
+
+        # マーカーが存在するかチェック
+        if not re.search(marker_pattern, text):
+            return text
+
+        # 各セクションを抽出
+        sections: Dict[str, str] = {}
+        current_section: Optional[str] = None
+        current_content: List[str] = []
+
+        for line in text.split("\n"):
+            match = re.match(r"【([^】]+)】", line)
+            if match:
+                # 前のセクションを保存
+                if current_section is not None:
+                    sections[current_section] = "\n".join(current_content).strip()
+                # 新しいセクション開始
+                current_section = match.group(1)
+                current_content = []
+            elif current_section is not None:
+                current_content.append(line)
+
+        # 最後のセクションを保存
+        if current_section is not None:
+            sections[current_section] = "\n".join(current_content).strip()
+
+        # キャラクターの視点を取得
+        target_perspective = perspective_map.get(character)
+        if target_perspective and target_perspective in sections:
+            return sections[target_perspective]
+
+        # フォールバック: 客観
+        if "客観" in sections:
+            return sections["客観"]
+
+        # どちらもなければ元テキスト
+        return text
 
     def init_from_files(
         self,

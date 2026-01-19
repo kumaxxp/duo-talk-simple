@@ -1,7 +1,7 @@
 # Architecture Codemap
 
-**Generated**: 2026-01-19 12:30
-**Freshness**: Current
+**Generated**: 2026-01-19 16:00
+**Freshness**: Current (Phase 2A updated)
 
 ---
 
@@ -41,6 +41,9 @@
 │ - is_healthy()    │  │   knowledge() │  │   prompt()          │
 │                   │  │ - init_from_  │  │ - guess_state()     │
 │                   │  │   files()     │  │ - select_few_shot() │
+│                   │  │ - extract_    │  │                     │
+│                   │  │   perspective │  │                     │
+│                   │  │   () ★2A     │  │                     │
 └───────────────────┘  └───────────────┘  └─────────────────────┘
           │                    │
           ▼                    ▼
@@ -78,6 +81,7 @@ core/prompt_builder.py
 
 core/rag_engine.py
 ├── chromadb
+├── re (Phase 2A: perspective extraction)
 └── (uses OllamaClient via injection)
 
 core/ollama_client.py

@@ -1,7 +1,7 @@
 # Data Models Codemap
 
-**Generated**: 2026-01-19 12:30
-**Freshness**: Current
+**Generated**: 2026-01-19 16:00
+**Freshness**: Current (Phase 2A updated)
 
 ---
 
@@ -80,6 +80,40 @@ logging:
     enabled: bool
     level: str
 ```
+
+---
+
+## Knowledge Format (Phase 2A)
+
+### Perspective Block Format
+
+Knowledge files can contain perspective markers for character-specific extraction:
+
+```text
+## Section Title
+
+【客観】
+- Objective fact 1
+- Objective fact 2
+
+【やなの視点】
+- やな's perspective on this topic
+- Action-oriented, intuitive approach
+
+【あゆの視点】
+- あゆ's perspective on this topic
+- Data-driven, analytical approach
+```
+
+**Extraction Logic** (`RAGEngine.extract_perspective()`):
+1. If character's perspective block exists → return that block
+2. If not, fallback to 【客観】 block
+3. If no markers exist → return original text
+
+**Files Using This Format**:
+- `knowledge/jetracer_tech_with_perspectives.txt` ✅
+- `knowledge/jetracer_tech.txt` (Phase 2B target)
+- `knowledge/sisters_shared.txt` (Phase 2B target)
 
 ---
 
