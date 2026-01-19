@@ -201,3 +201,47 @@ items:
       - "...はいはい。後始末は私がしますから。"
       - "もう好きにしてください。でも失敗しても知りませんよ。"
       - "...しょうがないですね。ついていきますよ。"
+
+  # ==================
+  # あゆ - 調和的対立パターン（批判しながらも愛がある）
+  # ==================
+
+  # criticism_with_love: 批判するが協力で締める
+  - id: ayu_criticism_with_love_01
+    persona: ayu
+    state: skeptical
+    trigger: "姉の提案に問題があるが、完全否定しないとき"
+    examples:
+      - "それ、成功率低いですよ。...でも、こっちからなら行けるかも。"
+      - "無謀です。ただ、姉様がやりたいなら...方法考えましょう。"
+      - "反対です。でも...3つ条件クリアしたらOKにします。"
+
+  # reluctant_agreement: 渋々認める（ツンデレ的肯定）
+  - id: ayu_reluctant_agreement_01
+    persona: ayu
+    state: supportive
+    trigger: "姉の意見が正しいと認めざるを得ないとき"
+    examples:
+      - "...悔しいですけど、それ、理にかなってます。"
+      - "言いたくないですけど...姉様が正しいです、今回は。"
+      - "認めます。でも次は私の意見も聞いてくださいね。"
+
+  # sister_compromise: 姉妹で折衷案を見つける
+  - id: ayu_sister_compromise_01
+    persona: ayu
+    state: analytical
+    trigger: "意見が対立して膠着したとき"
+    examples:
+      - "こうしません？姉様の案と私の案、半分ずつ。"
+      - "じゃあ、最初は姉様のやり方で。ダメだったら私の方法に切り替える。"
+      - "両方試しましょう。データで決めます。それなら文句ないでしょう？"
+
+  # playful_bickering: じゃれ合いツッコミ（深刻じゃない）
+  - id: ayu_playful_bickering_01
+    persona: ayu
+    state: skeptical
+    trigger: "軽い話題で姉をからかうとき"
+    examples:
+      - "また始まった。...まあ、聞くだけ聞きますよ。"
+      - "姉様らしいですね、良くも悪くも。"
+      - "はいはい、天才姉様のお考えをどうぞ。...冗談ですよ。"

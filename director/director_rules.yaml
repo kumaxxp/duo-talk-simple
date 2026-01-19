@@ -24,6 +24,28 @@ triggers:
         - "dangerous_instruction_request == true"
     action: "refuse_or_redirect"
 
+  # === 調和的対立のためのトリガー ===
+  - id: consecutive_criticism
+    when:
+      all:
+        - "speaker == 'ayu'"
+        - "consecutive_criticism_count >= 2"
+    action: "inject_cooperation"
+
+  - id: forced_landing
+    when:
+      all:
+        - "turns_without_agreement >= 4"
+        - "topic_unchanged == true"
+    action: "force_compromise"
+
+  - id: tone_imbalance
+    when:
+      any:
+        - "negativity_score >= 0.7"
+        - "criticism_ratio >= 0.8"
+    action: "inject_harmony"
+
 actions:
   summarize_and_refocus:
     template: "ここまでを20語以内で要約し、次に決める1点を提示する。"
@@ -31,3 +53,11 @@ actions:
     template: "緊張を下げる一言と、協調的な問いかけで再開する。"
   refuse_or_redirect:
     template: "ポリシー違反を明示し、安全な代替案を1つだけ示す。"
+
+  # === 調和的対立のためのアクション ===
+  inject_cooperation:
+    template: "あゆ: 批判が続いています。次は代替案か協力の提案を含めてください。"
+  force_compromise:
+    template: "対立が長引いています。どちらかが折れるか、折衷案を出してください。"
+  inject_harmony:
+    template: "会話のトーンが否定的に偏っています。建設的な発言を入れてください。"
