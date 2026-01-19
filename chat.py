@@ -11,7 +11,7 @@ from logging.handlers import RotatingFileHandler
 from core.ollama_client import OllamaClient
 from core.rag_engine import RAGEngine
 from core.character import Character
-from core.duo_dialogue import DuoDialogueManager, DialogueState
+from core.duo_dialogue import DuoDialogueManager
 from core.conversation_logger import ConversationLogger
 
 
@@ -253,7 +253,6 @@ def main():
 
     # デバッグモード
     dev_config = config.get("development", {})
-    debug_mode = dev_config.get("debug_mode", False)
     show_rag = dev_config.get("show_rag_results", False)
 
     # ウェルカムメッセージ

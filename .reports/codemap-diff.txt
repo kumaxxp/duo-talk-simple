@@ -1,0 +1,82 @@
+# Codemap Update Report
+
+**Generated**: 2026-01-19
+**Status**: Initial Creation
+
+---
+
+## Summary
+
+This is the initial codemap generation for duo-talk-simple project.
+No previous codemaps existed, so this represents 100% new content.
+
+---
+
+## Files Created
+
+| File | Size | Content |
+|------|------|---------|
+| docs/codemaps/architecture.md | 5.4KB | System overview, dependency graph, data flow |
+| docs/codemaps/core.md | 10.2KB | Module APIs, class definitions, functions |
+| docs/codemaps/data.md | 8.1KB | Config schema, persona schema, runtime structures |
+
+**Total**: 3 files, ~23.7KB
+
+---
+
+## Coverage
+
+### Modules Documented
+
+| Module | Lines | Classes | Functions |
+|--------|-------|---------|-----------|
+| chat.py | 391 | 0 | 6 |
+| core/ollama_client.py | 141 | 1 | 0 |
+| core/rag_engine.py | 231 | 1 | 0 |
+| core/character.py | 173 | 1 | 0 |
+| core/prompt_builder.py | 256 | 1 | 5 |
+| core/duo_dialogue.py | 186 | 2 | 0 |
+| core/conversation_logger.py | 157 | 1 | 0 |
+
+### Configuration Files Documented
+
+- config.yaml (main configuration)
+- personas/*.yaml (character definitions)
+- patterns/few_shot_patterns.yaml (few-shot examples)
+- director/director_rules.yaml (director intervention)
+
+### Data Structures Documented
+
+- Message (conversation format)
+- RAGResult (search result format)
+- DialogueEntry (duo dialogue format)
+- GenerationConfig (LLM parameters)
+- Persona (dataclass)
+- DialogueState (enum)
+
+---
+
+## Architecture Diagrams
+
+1. System Overview - Full component hierarchy
+2. Dependency Graph - Import relationships
+3. Data Flow - User input to response
+4. Cross-Module Dependencies - Core module interactions
+
+---
+
+## Recommendations
+
+1. **Keep Updated**: Run /update-codemaps after significant changes
+2. **Review Coverage**: Ensure new modules are added to codemaps
+3. **Validate Accuracy**: Cross-check with actual source code
+
+---
+
+## Next Update
+
+Run `/update-codemaps` after:
+- Adding new modules
+- Changing API signatures
+- Modifying data structures
+- Significant refactoring
